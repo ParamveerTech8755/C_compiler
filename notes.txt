@@ -1,0 +1,12 @@
+compiler:
+converts source code to assembly and later to a file with machine code, 1's and 0's(object file)
+
+now one source file creates one object file. These object files are stitched together along with the
+libraries with the help of linker.
+Linker is responsible for creating an executable file out of a cpp project.
+
+
+compiler is majorly subdivided into 3 parts based on their function:
+1. lexer => checks all the tokens used in the source file are indentified.
+2. parsing => makes an abstract syntax tree and validates the relationship between the tokens.
+3. code generation => converts this AST into assembly code.
