@@ -19,9 +19,9 @@ enum TOKEN_TYPE {
 
 typedef struct TOKEN_STRUCT{
 	char *value;
-	TOKEN_TYPE type;
+	enum TOKEN_TYPE type;
 } token;
 
-token create_token(string*);
+token* create_token(string*);
 
 #endif

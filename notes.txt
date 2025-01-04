@@ -10,3 +10,7 @@ compiler is majorly subdivided into 3 parts based on their function:
 1. lexer => checks all the tokens used in the source file are indentified.
 2. parsing => makes an abstract syntax tree and validates the relationship between the tokens.
 3. code generation => converts this AST into assembly code.
+
+
+command to compile the project:
+gcc ./include/customstring.c ./include/errors.c lexer.c mycompiler.c token.c -o mycompiler
