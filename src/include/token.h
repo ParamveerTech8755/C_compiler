@@ -1,5 +1,6 @@
 #ifndef TOKEN_H
 #define TOKEN_H
+#include "customstring.h"
 
 //ifndef prevents this file to be included multiple times in the final exe file
 enum TOKEN_TYPE {
@@ -12,7 +13,8 @@ enum TOKEN_TYPE {
 	TOKEN_LBRACE,
 	TOKEN_RETURN,
 	TOKEN_NUMBER_LIT,
-	TOKEN_SEMI
+	TOKEN_SEMI,
+	TOKEN_UNDEFINED
 };
 
 typedef struct TOKEN_STRUCT{
@@ -20,6 +22,6 @@ typedef struct TOKEN_STRUCT{
 	TOKEN_TYPE type;
 } token;
 
-token create_token(char *value);
+token create_token(string*);
 
 #endif

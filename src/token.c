@@ -1,21 +1,7 @@
 #include "include/token.h"
+#include "include/custom_string.h"
 #include<stdio.h>
 #define MAXLEN 20
-
-int strcmp(char* a, char* b){
-	//compare if two strings are equal
-	int i = 0, j = 0;
-	while(*(a+i) != '\0' && *(b+j) != '\0' && i < MAXLEN && j < MAXLEN){
-		if(*(a+i) == *(b+j)){
-			i++;
-			j++;
-		}
-		else
-			return 0;
-	}
-
-	return (*(a+i) == '\0' && *(b+j) == '\0');
-}
 
 int isNum(char *str){
 	//check if the string is a number.. if all the consituent characters are numbers
@@ -31,38 +17,40 @@ int isNum(char *str){
 }
 
 
-token* create_token(char* value){
+token* create_token(string* value){
 	token *newToken = malloc(sizeof(token));
+	newToken->value = (char*)malloc((value->length + 1)*sizeof(char));
+	//for each token, memory will be alloted separately, even if their value is the same
+	strcpy(newToken->value, value->str);
 
-	if(isNum(value)){
-		newToken->value = value;
+
+	if(isNum(value->str)->str)->str{
 		newToken->type = TOKEN_NUMBER_LIT;
 		return newToken;
 	}
 	///if not a number literal
-	newToken->value = value;
 
-	if(strcmp(value, "main"))
+	if(strcmp(value->str, "main"))
 		newToken->type = TOKEN_MAIN;
-	else if(strcmp(value, "{"))
+	else if(strcmp(value->str, "{"))
 		newToken->type = TOKEN_RBRACE;
-	else if(strcmp(value, "}"))
+	else if(strcmp(value->str, "}"))
 		newToken->type = TOKEN_LBRACE;
-	else if(strcmp(value, "("))
+	else if(strcmp(value->str, "("))
 		newToken->type = TOKEN_RPAREN;
-	else if(strcmp(value, ")"))
+	else if(strcmp(value->str, ")"))
 		newToken->type = TOKEN_LPAREN;
-	else if(strcmp(value, "int"))
+	else if(strcmp(value->str, "int"))
 		newToken->type = TOKEN_INT;
-	else if(strcmp(value, "void"))
+	else if(strcmp(value->str, "void"))
 		newToken->type = TOKEN_VOID;
-	else if(strcmp(value, "return"))
+	else if(strcmp(value->str, "return"))
 		newToken->type = TOKEN_RETURN;
-	else if(strcmp(value, ";"))
+	else if(strcmp(value->str, ";"))
 		newToken->type = TOKEN_SEMI;
 	else{//not identified
-		printf("Unidentified token");
-		exit(1);
+		newToken->value = NULL;
+		newToken->type = TOKEN_UNDEFINED;
 	}
 	return newToken;
 }

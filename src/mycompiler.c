@@ -8,7 +8,10 @@ int main(int argc, char* argv[]){
 		return 1;//returns with error code
 	}
 	//call the lexer with the source file
-	token* token_arr = lexer(argv[1]);
+	Lexer* lexer = (Lexer*)malloc(sizeof(Lexer));
+	initialize_lexer(lexer, argv[1]);
+
+	lex_source_code(lexer);
 
 	return 0;
 }

@@ -2,18 +2,120 @@
 #include<stdlib.h>
 #include "include/lexer.h"
 #include "include/token.h"
+#include "include/customstring.h"
+#include "include/errors.h"
 
-token** lexer(char* filename){
-	FILE *file = fopen(filename, "r");
-	if(file == NULL){
-		perror("Failed to open file %s", filename);
+void initialize_lexer(Lexer* lexer, char* filename){
+	lexer->row = 0;
+	lexer->col = 0;
+	lexer->src = filename;
+	lexer->index = 0;
+	lexer->capacity = 100;
+	lexer->TOKEN_LIST = (token**)calloc(lexer->capacity, sizeof(token*));
+	if(lexer->TOKEN_LIST == NULL){
+		printError(HEAP_ALLOCATION_FAILED);
 		exit(1);
 	}
-	int thisChar;
+	initialize_empty_string(lexer->text);
+}
 
-    while ((thisChar = fgetc(file)) != EOF) { // Read character by character
-        printf("%c", thisChar); // Print the line
+
+void push_token(Lexer* lexer, token* tok){
+	if(lexer->index >= lexer->capacity){
+		lexer->capacity *= 2;
+		//assuming that it will fit in the integer limit.
+		token** newList = (token**)calloc(lexer->capacity, sizeof(token*));
+		for(int i = 0; i < lexer->index; i++)
+			*(newList+i) = *(lexer->TOKEN_LIST+i);
+
+		free(lexer->TOKEN_LIST);
+		lexer->TOKEN_LIST = newList;
+
+	}
+		*(lexer->TOKEN_LIST+lexer->index++) = tok;
+}
+
+ void lex_source_code(Lexer* lexer){
+
+	FILE *file = fopen(lexer->filename, "r");
+	if(file == NULL){
+		perror("Failed to open file %s", lexer->filename);
+		exit(1);
+	}
+	int *thisChar = &(lexer->thisChar);
+	string* text = lexer->text;
+    while ((*thisChar = fgetc(file)) != EOF) { // Read character by character
+    	lexer->col++;
+
+    	if(*thisChar == 10 || *thisChar == 13 || *thisChar == ' ' || *thisChar == '\t'){
+    		if(*thisChar == 10 || *thisChar == 13){
+    			lexer->row++;
+    			lexer->col = 0;
+    		}
+    		if(text->length > 0){
+    			token* t = create_token(text);
+    			if(!t->value){
+    				printTokenError(lexer->row, lexer->col, INVALID_TOKEN);
+    				exit(1);
+    			}
+    			///push the token in the tokens array
+    			push_token(lexer, t);
+    			free(text->str);
+    			initialize_empty_string(text);
+    		}
+    	}
+    	else if(*thisChar == '(' || *thisChar == ')' || *thisChar == '{' || *thisChar == '}' || *thisChar == ';'){
+    		// two tokens will be separated by either { or , or ; or ( or ) or } or whitespace  
+    		if(text->length > 0){
+    			token* t = create_token(text);
+    			if(!t->value){
+    				printTokenError(lexer->row, lexer->col, INVALID_TOKEN);
+    				exit(1);
+    			}
+    			push_token(lexer, t);
+    		}
+	    	char* str = convertCharToCString(*thisChar);
+
+	    	free(text->str);
+	    	initialize_string(text, str);
+	    	token* another_t = create_token(text);
+	    	if(!another_t->value){
+				printTokenError(lexer->row, lexer->col, INVALID_TOKEN);
+				exit(1);
+    		}
+    		push_token(lexer, another_t);
+
+	    	free(text->str);
+	    	initialize_empty_string(text);
+    	}
+    	else{
+
+    		char* character = convertCharToCString(*thisChar);
+    		string* append = (string*)malloc(sizeof(string));
+    		append->length = 1;
+    		append->str = character;
+
+    		lexer->text = strconcat(text, append);
+    		free(append);
+    		free(character);
+    		free(text);
+    		text = lexer->text;
+    	}
+
     }
+
+    //file ended
+    if(text->length > 0){
+    	token* t = create_token(text);
+    	if(!t->value){
+			printTokenError(lexer->row, lexer->col, INVALID_TOKEN);
+			exit(1);
+		}
+		push_token(lexer, t);
+    }
+    
+    free(text->str);
+    free(text);
 
     fclose(file);
 }
