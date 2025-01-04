@@ -10,11 +10,12 @@ typedef struct custom_string {
 } string;
 
 
-string* strconcat(string*, string*);
-int strlen(char*);
+string* stringconcat(string*, string*);
+int stringlen(char*);
 void initialize_string(string*, char*);
-void strcpy(char*, char*);
-int strcmp(char*, char*);
-char* convertCharToCString(char ch);
+void stringcpy(char*, char*);
+int stringcmp(char*, char*);
+char* convertCharToCString(char);
+string* toString(int);
 
 #endif

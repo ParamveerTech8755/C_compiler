@@ -1,8 +1,8 @@
-#include "custom_string.h"
+#include "customstring.h"
 #include<stdio.h>
 #include<stdlib.h>
 
-string* strconcat(string* a, string* b){
+string* stringconcat(string* a, string* b){
 	int total_length = a->length + b->length;
 	string* newString = (string*)malloc(sizeof(struct custom_string));
 	newString->length = total_length;
@@ -18,7 +18,7 @@ string* strconcat(string* a, string* b){
 	return newString;
 }
 
-int strlen(char* text){
+int stringlen(char* text){
 	//should be '\0' terminated
 	int i = 0;
 	while(*(text+i) != '\0' && i < MAX_STRING_LEN)
@@ -30,22 +30,26 @@ int strlen(char* text){
 
 void initialize_string(string* newString, char* text){
 	if(text){
-		newString->length = strlen(text);
-		if(length == -1){
+		newString->length = stringlen(text);
+		if(newString->length == -1){
 			perror("String size exceeds maximum supported value");
 			exit(1);
 		}
 		newString->str = (char*)malloc((newString->length + 1)*sizeof(char));
-		strcpy(newString->str, text);
+		stringcpy(newString->str, text);
 	}
 	else{
 		newString->length = 0;
 		newString->str = (char*)malloc(sizeof(char));
+		if(newString->str == NULL){
+			perror("Insufficient memory");
+			exit(EXIT_FAILURE);
+		}
 		*(newString->str) = '\0';
 	}
 }
 
-void strcpy(char* a, char* b){
+void stringcpy(char* a, char* b){
 	//a <- b
 	//a = destination, b = source
 	int i = 0;
@@ -56,10 +60,10 @@ void strcpy(char* a, char* b){
 	*(a+i) = '\0';
 }
 
-int strcmp(char* a, char* b){
+int stringcmp(char* a, char* b){
 	//compare if two strings are equal
 	int i = 0, j = 0;
-	while(*(a+i) != '\0' && *(b+j) != '\0' && i < MAXLEN && j < MAXLEN){
+	while(*(a+i) != '\0' && *(b+j) != '\0' && i < MAX_STRING_LEN && j < MAX_STRING_LEN){
 		if(*(a+i) == *(b+j)){
 			i++;
 			j++;
@@ -77,4 +81,30 @@ char* convertCharToCString(char ch){
 	*(str+1) = '\0';
 	
 	return str;
+}
+
+string* toString(int num){
+	//only valid for whole numbers
+
+	string* result = (string*)malloc(sizeof(string));
+	if(num == 0){
+		result->length = 1;
+		result->str = convertCharToCString('0');
+	}
+	while(num > 0){
+		int digit = num%10;
+		num /= 10;
+		string* t = (string*)malloc(sizeof(string));
+		t->str = convertCharToCString('0'+digit);
+		t->length = 1;
+
+		string* temp = stringconcat(result, t);
+		free(result->str);
+		free(result);
+		free(t->str);
+		free(t);
+		result = temp;
+	}
+
+	return result;
 }
