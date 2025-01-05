@@ -1,8 +1,11 @@
 #include "include/parser.h"
-#include "token.h"
+#include "include/token.h"
+#include "include/components/program.h"
+
 
 void initialize_parser(Parser* parser){
-	parser->ast_root = (Program*)malloc(sizeof(Program));
+	parser->ast_root = initialize_program();
+
 }
 
 void parse_into_ast(Parser* parser, token** TOKEN_LIST){

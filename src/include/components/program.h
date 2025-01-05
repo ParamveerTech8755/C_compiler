@@ -1,12 +1,19 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
-typedef struct Program_Struct {
-	
+#include "function.h"
+
+
+typedef struct Program_Struct{
+	int capacity;
+	int index;
+	Function** FUNCTION_LIST;
 } Program;
 
-void initialize_program(Program*);
+Program* initialize_program();
 
 void destory_program(Program**);
+
+void push_function(Program*, Function*);
 
 #endif
