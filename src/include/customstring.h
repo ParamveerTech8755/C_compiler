@@ -17,5 +17,6 @@ void stringcpy(char*, char*);
 int stringcmp(char*, char*);
 char* convertCharToCString(char);
 string* toString(int);
+void destroy_string(string**);
 
 #endif

@@ -108,3 +108,10 @@ string* toString(int num){
 
 	return result;
 }
+
+void destroy_string(string** text_ptr){
+	string* text = *text_ptr;
+	free(text->str);
+	free(text);
+	*text_ptr = NULL;
+}

@@ -21,4 +21,6 @@ void lex_source_code(Lexer*);
 
 void push_token(Lexer*, token*);
 
+void destroy_lexer(Lexer**);
+
 #endif

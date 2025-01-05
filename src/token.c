@@ -56,3 +56,9 @@ token* create_token(string* value){
 	}
 	return newToken;
 }
+
+void destroy_token(token** t){
+	free((*t)->value);
+	free(*t);
+	*t = NULL;
+}

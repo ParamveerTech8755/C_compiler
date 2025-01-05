@@ -24,4 +24,6 @@ typedef struct TOKEN_STRUCT{
 
 token* create_token(string*);
 
+void destroy_token(token**);
+
 #endif

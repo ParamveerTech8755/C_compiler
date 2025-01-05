@@ -120,3 +120,18 @@ void push_token(Lexer* lexer, token* tok){
 
     fclose(file);
 }
+
+
+void destroy_lexer(Lexer** lexer_ptr){
+	Lexer* lexer = *lexer_ptr;
+	free(lexer->src);
+	destroy_string(&lexer->text);
+
+	for(int i = 0; i < lexer->index; i++)
+		destroy_token(lexer->TOKEN_LIST+i);
+	
+	free(lexer->TOKEN_LIST);
+	free(lexer);
+
+	*lexer_ptr = NULL;
+}
