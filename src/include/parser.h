@@ -6,13 +6,19 @@
 
 
 typedef struct Parser_Struct{
-
+	int token_index;
+	int token_size;
 	Program* ast_root;
+	token** TOKEN_LIST;	
 } Parser;
 
-void initialize_parser(Parser*);
+void initialize_parser(Parser*, token**, int);
 
-void parse_into_ast(Parser*, token**);
+int parse_into_ast(Parser*);
+
+int parser_next(Parser*);
+
+int parser_is_token_valid(Parser*, enum TOKEN_TYPE);
 
 void destroy_parser(Parser**);
 

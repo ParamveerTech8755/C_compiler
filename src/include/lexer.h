@@ -17,7 +17,7 @@ typedef struct Lexer_Struct {
 
 void initialize_lexer(Lexer*, char*);
 
-void lex_source_code(Lexer*);
+int lex_source_code(Lexer*);
 
 void push_token(Lexer*, token*);
 

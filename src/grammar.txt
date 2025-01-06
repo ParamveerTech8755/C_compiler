@@ -1,0 +1,13 @@
+This is the grammar of non-terminal symbols the parser uses
+kinda documentation
+
+<program> := <function> <function> ...
+<function> := return_type <id> "(" [<parameter1> "," <parameter> ...] ")" "{" <statment> <statement> ... "}"
+/* id of atleast one function must be main */
+
+<statement> := "return" <expression> ";" |
+<expression> := <constant> | <operator> <constant> | <constant> <operator> <constant> |
+				<expression> <operator> <expression> | <expression> <operator> <constant> |
+				<constant> <operator> <expression> | <operator> <expression>
+
+<constant> := <int> | <char> | <string>

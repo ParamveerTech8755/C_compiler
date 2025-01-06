@@ -1,8 +1,9 @@
 #ifndef FUNCTION_H
 #define FUNCTION_H
 
-#include "../token.h"
 #include "statement.h"
+#include "../parser.h"
+
 
 typedef struct Function_Struct{
 	char* return_type;//points to the same location as token->value
@@ -18,6 +19,9 @@ Function* initialize_function(char*, char*);
 
 void push_statement(Function*, Statement*);
 
+int parse_function(Function*, Parser*);
+
 void destroy_function(Function**);
+
 
 #endif

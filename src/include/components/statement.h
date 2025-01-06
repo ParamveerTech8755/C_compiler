@@ -2,6 +2,7 @@
 #define STATEMENT_H
 
 #include "expression.h"
+#include "../parser.h"
 
 enum STATEMENT_TYPE {
 	RETURN,
@@ -11,13 +12,14 @@ enum STATEMENT_TYPE {
 typedef struct Statment_Struct {
 	enum STATEMENT_TYPE type;
 	//will have different grammar based on the type of the expression.
-	Expression expression;
-	//not a pointer to the expression but the expression itself.. coz why not
+	Expression* expression;
 } Statement;
 
 Statement* initialize_statement();
 
 void destroy_statement(Statement**);
+
+int parse_statement(Statement*, Parser*);
 
 // void set_statement_type(Statement*, enum STATEMENT_TYPE);
 

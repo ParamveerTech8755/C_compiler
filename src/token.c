@@ -19,8 +19,13 @@ int isNum(char *str){
 }
 
 
-token* create_token(string* value){
+token* create_token(string* value, int row, int col){
 	token *newToken = malloc(sizeof(token));
+	
+	//the position of the token in the source file
+	newToken->row = row;
+	newToken->col = col;
+
 	newToken->value = (char*)malloc((value->length + 1)*sizeof(char));
 	//for each token, memory will be alloted separately, even if their value is the same
 	stringcpy(newToken->value, value->str);
@@ -42,18 +47,17 @@ token* create_token(string* value){
 		newToken->type = TOKEN_RPAREN;
 	else if(stringcmp(value->str, ")"))
 		newToken->type = TOKEN_LPAREN;
-	else if(stringcmp(value->str, "int"))
-		newToken->type = TOKEN_INT;
+	else if(stringcmp(value->str, "int") || stringcmp(value->str, "char"))/*all the data-types*/
+		newToken->type = TOKEN_DATA_TYPE;
 	else if(stringcmp(value->str, "void"))
 		newToken->type = TOKEN_VOID;
 	else if(stringcmp(value->str, "return"))
 		newToken->type = TOKEN_RETURN;
 	else if(stringcmp(value->str, ";"))
 		newToken->type = TOKEN_SEMI;
-	else{//not identified
-		newToken->value = NULL;
-		newToken->type = TOKEN_UNDEFINED;
-	}
+	else//identifier maybe
+		newToken->type = TOKEN_ID;
+
 	return newToken;
 }
 

@@ -20,6 +20,9 @@ string* stringconcat(string* a, string* b){
 
 int stringlen(char* text){
 	//should be '\0' terminated
+	if(text == NULL)
+		return 0;
+
 	int i = 0;
 	while(*(text+i) != '\0' && i < MAX_STRING_LEN)
 		i++;
@@ -29,22 +32,24 @@ int stringlen(char* text){
 }
 
 void initialize_string(string* newString, char* text){
+	int length = stringlen(text);
+
+	newString->length = length;
+
+	if(length == -1){
+		perror("String size exceeds maximum supported value");
+		newString->length = MAX_STRING_LEN;
+		//only the first MAX_STRING_LEN characters are considered//
+	}
+
+
 	if(text){
-		newString->length = stringlen(text);
-		if(newString->length == -1){
-			perror("String size exceeds maximum supported value");
-			exit(1);
-		}
 		newString->str = (char*)malloc((newString->length + 1)*sizeof(char));
 		stringcpy(newString->str, text);
 	}
 	else{
 		newString->length = 0;
 		newString->str = (char*)malloc(sizeof(char));
-		if(newString->str == NULL){
-			perror("Insufficient memory");
-			exit(EXIT_FAILURE);
-		}
 		*(newString->str) = '\0';
 	}
 }

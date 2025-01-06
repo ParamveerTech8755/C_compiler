@@ -8,7 +8,8 @@ Program* initialize_program(){
 	program->FUNCTION_LIST = (Function**)calloc(program->capacity, sizeof(Function*));
 	if(program->FUNCTION_LIST){
 		perror("Insufficient memory");
-		exit(EXIT_FAILURE);
+		free(program);
+		program = NULL;
 	}
 
 	return program;

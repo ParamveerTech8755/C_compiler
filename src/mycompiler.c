@@ -3,8 +3,6 @@
 #include "include/lexer.h"
 #include "include/parser.h"
 
-#define NO_MEM "Insufficient memory"
-
 int main(int argc, char* argv[]){
 	if(argc < 2){
 		perror("Error: Incorrect usage\nCorrect usage: mycompiler <filename>");
@@ -14,12 +12,16 @@ int main(int argc, char* argv[]){
 	Lexer* lexer = (Lexer*)malloc(sizeof(Lexer));
 	if(lexer == NULL){
 		perror(NO_MEM);
-		destroy_lexer(&lexer);
 		return EXIT_FAILURE;
 	}
 
 	initialize_lexer(lexer, argv[1]);
-	lex_source_code(lexer);
+	int lexer_status = lex_source_code(lexer);
+
+	if(lexer_status != 0){
+		destroy_lexer(&lexer);
+		return lexer_status;
+	}
 
 	printf("###token list###\n");
 	//print the result found by lexer
@@ -31,16 +33,20 @@ int main(int argc, char* argv[]){
 	if(parser == NULL){
 		perror(NO_MEM);
 		destroy_lexer(&lexer);
-		destroy_parser(&parser);
 		return EXIT_FAILURE;
 	}
 
-	initialize_parser(parser);
-	parse_into_ast(parser, lexer->TOKEN_LIST);
-
+	initialize_parser(parser, lexer->TOKEN_LIST, lexer->index);
+	
+	int parser_status = parse_into_ast(parser);
 
 	destroy_lexer(&lexer);
 	destroy_parser(&parser);
+
+	if(parser_status != 0){
+		perror("Parsing failed");
+		return status;
+	}
 
 	return 0;
 }

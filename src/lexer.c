@@ -14,7 +14,7 @@ void initialize_lexer(Lexer* lexer, char* filename){
 	lexer->TOKEN_LIST = (token**)calloc(lexer->capacity, sizeof(token*));
 	if(lexer->TOKEN_LIST == NULL){
 		perror("Insufficient memory\n");
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 	lexer->text = (string*)malloc(sizeof(string));
 	initialize_empty_string(lexer->text);
@@ -36,12 +36,12 @@ void push_token(Lexer* lexer, token* tok){
 		*(lexer->TOKEN_LIST+lexer->index++) = tok;
 }
 
- void lex_source_code(Lexer* lexer){
+ int lex_source_code(Lexer* lexer){
 
 	FILE *file = fopen(lexer->src, "r");
 	if(file == NULL){
 		perror("Failed to open file");
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 	int *thisChar = &(lexer->thisChar);
 	string* text = lexer->text;
@@ -54,10 +54,10 @@ void push_token(Lexer* lexer, token* tok){
     			lexer->col = 0;
     		}
     		if(text->length > 0){
-    			token* t = create_token(text);
+    			token* t = create_token(text, lexer->row, lexer->col);
     			if(!t->value){
     				printTokenError(lexer->row, lexer->col);
-    				exit(EXIT_FAILURE);
+    				return EXIT_FAILURE;
     			}
     			///push the token in the tokens array
     			push_token(lexer, t);
@@ -68,10 +68,10 @@ void push_token(Lexer* lexer, token* tok){
     	else if(*thisChar == '(' || *thisChar == ')' || *thisChar == '{' || *thisChar == '}' || *thisChar == ';'){
     		// two tokens will be separated by either { or , or ; or ( or ) or } or whitespace  
     		if(text->length > 0){
-    			token* t = create_token(text);
+    			token* t = create_token(text, lexer->row, lexer->col);
     			if(!t->value){
     				printTokenError(lexer->row, lexer->col);
-    				exit(EXIT_FAILURE);
+    				return EXIT_FAILURE;
     			}
     			push_token(lexer, t);
     		}
@@ -79,10 +79,10 @@ void push_token(Lexer* lexer, token* tok){
 
 	    	free(text->str);
 	    	initialize_string(text, str);
-	    	token* another_t = create_token(text);
+	    	token* another_t = create_token(text, lexer->row, lexer->col);
 	    	if(!another_t->value){
 				printTokenError(lexer->row, lexer->col);
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
     		}
     		push_token(lexer, another_t);
 
@@ -107,10 +107,10 @@ void push_token(Lexer* lexer, token* tok){
 
     //file ended
     if(text->length > 0){
-    	token* t = create_token(text);
+    	token* t = create_token(text, lexer->row, lexer->col);
     	if(!t->value){
 			printTokenError(lexer->row, lexer->col);
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 		push_token(lexer, t);
     }
@@ -119,6 +119,10 @@ void push_token(Lexer* lexer, token* tok){
     free(text);
 
     fclose(file);
+    
+
+    return 0;    
+    //successful
 }
 
 

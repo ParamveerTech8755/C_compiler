@@ -12,5 +12,10 @@ compiler is majorly subdivided into 3 parts based on their function:
 3. code generation => converts this AST into assembly code.
 
 
-command to compile the project:
-gcc ./include/customstring.c ./include/errors.c lexer.c mycompiler.c token.c -o mycompiler
+command to build the project:
+gcc /*all .c files*/ -o mycompiler
+
+command to compile and link separately:
+gcc -c /*all .c files*/
+	&&
+gcc -o /*all .o files*/ mycompiler

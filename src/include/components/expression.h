@@ -17,10 +17,11 @@ for time being, support only for constant expressions
 */
 
 typedef struct Expression_Struct {
-	Constant
+	Constant constant;
 } Expression;
 
 Expression* initialize_expression();
 
+void destroy_expression(Expression**);
 
 #endif
