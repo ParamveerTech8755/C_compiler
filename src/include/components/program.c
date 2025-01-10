@@ -1,4 +1,6 @@
 #include "program.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 Program* initialize_program(){
 	Program* program = (Program*)malloc(sizeof(Program));

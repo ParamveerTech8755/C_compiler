@@ -1,5 +1,6 @@
 #include "statement.h"
-#include "../errors.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 Statement* initialize_statement(){
 	Statement* statement = (Statement*)malloc(sizeof(Statement));
@@ -8,27 +9,6 @@ Statement* initialize_statement(){
 
 	return statement;
 }
-
-// void set_statement_type(Statement* statement, enum STATEMENT_TYPE type){
-// 	statement->type = type;
-// }
-
-int parse_statement(Statement* statement, Parser* parser){
-	int index = parser->token_index;
-	
-	if(index >= parser->token_size){
-		perror(TOKEN_LIST_END);
-		return EXIT_FAILURE;
-	}
-	else if(parser_is_valid_token(parser, TOKEN_RETURN)){
-		statement->type = RETURN;
-		index = parser_next();
-		// 
-	}
-	return 0;//if everything goes well
-	
-}
-
 
 void destroy_statement(Statement** statement_ptr){
 	//maybe will have to use destroy_expression later

@@ -12,7 +12,7 @@ typedef struct Program_Struct{
 
 Program* initialize_program();
 
-void destory_program(Program**);
+void destroy_program(Program**);
 
 void push_function(Program*, Function*);
 

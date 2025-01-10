@@ -2,7 +2,6 @@
 #define STATEMENT_H
 
 #include "expression.h"
-#include "../parser.h"
 
 enum STATEMENT_TYPE {
 	RETURN,
@@ -19,7 +18,6 @@ Statement* initialize_statement();
 
 void destroy_statement(Statement**);
 
-int parse_statement(Statement*, Parser*);
 
 // void set_statement_type(Statement*, enum STATEMENT_TYPE);
 

@@ -14,7 +14,7 @@ void initialize_lexer(Lexer* lexer, char* filename){
 	lexer->TOKEN_LIST = (token**)calloc(lexer->capacity, sizeof(token*));
 	if(lexer->TOKEN_LIST == NULL){
 		perror("Insufficient memory\n");
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 	lexer->text = (string*)malloc(sizeof(string));
 	initialize_empty_string(lexer->text);
@@ -41,7 +41,7 @@ void push_token(Lexer* lexer, token* tok){
 	FILE *file = fopen(lexer->src, "r");
 	if(file == NULL){
 		perror("Failed to open file");
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 	int *thisChar = &(lexer->thisChar);
 	string* text = lexer->text;
@@ -66,7 +66,7 @@ void push_token(Lexer* lexer, token* tok){
     		}
     	}
     	else if(*thisChar == '(' || *thisChar == ')' || *thisChar == '{' || *thisChar == '}' || *thisChar == ';'){
-    		// two tokens will be separated by either { or , or ; or ( or ) or } or whitespace  
+    		// two tokens will be separated by either { or , or ; or ( or ) or } or whitespace
     		if(text->length > 0){
     			token* t = create_token(text, lexer->row, lexer->col);
     			if(!t->value){
@@ -114,14 +114,14 @@ void push_token(Lexer* lexer, token* tok){
 		}
 		push_token(lexer, t);
     }
-    
+
     free(text->str);
     free(text);
 
     fclose(file);
-    
 
-    return 0;    
+
+    return 0;
     //successful
 }
 
@@ -133,7 +133,7 @@ void destroy_lexer(Lexer** lexer_ptr){
 
 	for(int i = 0; i < lexer->index; i++)
 		destroy_token(lexer->TOKEN_LIST+i);
-	
+
 	free(lexer->TOKEN_LIST);
 	free(lexer);
 

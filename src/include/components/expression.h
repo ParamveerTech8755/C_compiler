@@ -2,6 +2,7 @@
 #define EXPRESSION_H
 
 #include "constant.h"
+#include "../token.h"
 /*
 Expression can be of multiple types:
 1. Constant
@@ -17,10 +18,14 @@ for time being, support only for constant expressions
 */
 
 typedef struct Expression_Struct {
-	Constant constant;
+  token* startToken;
+  int size;
+  int value;
 } Expression;
 
-Expression* initialize_expression();
+Expression* initialize_expression(token*);
+
+int evaluateExpression(Expression*);
 
 void destroy_expression(Expression**);
 

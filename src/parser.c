@@ -3,6 +3,7 @@
 #include "include/errors.h"
 #include "include/components/program.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 void initialize_parser(Parser* parser, token** TOKEN_LIST, int size){
 	parser->token_index = 0;
@@ -16,7 +17,7 @@ int parser_next(Parser* parser){
 
 	if(parser->token_index >= parser->token_size)
 		return -1;//next not valid
-	
+
 	return parser->token_index;
 }
 
@@ -34,8 +35,8 @@ int parse_into_ast(Parser* parser){
 		char *return_type, *name;
 		return_type = name = NULL;
 
-		if(*(token_list+parser->token_index)->type == TOKEN_DATA_TYPE)//this token is TOKEN_DATA_TYPE
-			return_type = *(token_list+parser->token_index)->value;
+		if((*(token_list+parser->token_index))->type == TOKEN_DATA_TYPE)//this token is TOKEN_DATA_TYPE
+			return_type = (*(token_list+parser->token_index))->value;
 		else{
 			printTokenError(token_list[parser->token_index]->row, token_list[parser->token_index]->col);
 			return EXIT_FAILURE;
@@ -46,7 +47,7 @@ int parse_into_ast(Parser* parser){
 			parser->token_index < parser->token_size
 				&&
 			(
-				token_list[parser->token_index]->type == TOKEN_MAIN || 
+				token_list[parser->token_index]->type == TOKEN_MAIN ||
 				token_list[parser->token_index]->type == TOKEN_ID
 			)
 		)
@@ -56,7 +57,7 @@ int parse_into_ast(Parser* parser){
 			return EXIT_FAILURE;
 		}
 
-		
+
 		int next_exists = parser_next(parser);
 		if(next_exists == -1){
 			perror(TOKEN_LIST_END);
@@ -64,7 +65,7 @@ int parse_into_ast(Parser* parser){
 		}
 
 		Function* function = initialize_function(return_type, name);
-		
+
 		int function_status = parse_function(function, parser);
 		if(function_status != 0)
 			return function_status;
@@ -80,4 +81,115 @@ void destroy_parser(Parser** parser_ptr){
 	destroy_program(&((*parser_ptr)->ast_root));
 	free(*parser_ptr);
 	*parser_ptr = NULL;
+}
+
+//function parser
+int parse_function(Function* function, Parser* parser){
+	//aliases
+	token** token_list = parser->TOKEN_LIST;
+	int index = parser->token_index;
+
+	//check for opening parenthesis
+	if(!parser_is_token_valid(parser, TOKEN_RPAREN)){
+		printTokenError(token_list[index]->row, token_list[index]->col);
+		return EXIT_FAILURE;
+	}
+	else
+		index = parser_next(parser);
+
+
+	/*check for parameter list*/
+
+	//check for closing parenthesis
+	if(index == -1){
+		perror(TOKEN_LIST_END);
+		return EXIT_FAILURE;
+	}
+	else if(!parser_is_token_valid(parser, TOKEN_LPAREN)){
+		printTokenError(token_list[index]->row, token_list[index]->col);
+		return EXIT_FAILURE;
+	}
+	else
+		index = parser_next(parser);
+
+	//check for opening brace
+	if(index == -1){
+		perror(TOKEN_LIST_END);
+		return EXIT_FAILURE;
+	}
+	if(!parser_is_token_valid(parser, TOKEN_RBRACE)){
+		printTokenError(token_list[index]->row, token_list[index]->col);
+		return EXIT_FAILURE;
+	}
+	else
+		index = parser_next(parser);
+
+	if(index == -1){
+		perror(TOKEN_LIST_END);//since we are expecting statements
+		return EXIT_FAILURE;
+	}
+
+	while(!parser_is_token_valid(parser, TOKEN_LBRACE)){
+		Statement* statement = initialize_statement();
+
+		int statement_status = parse_statement(statement, parser);
+		if(statement_status != 0)
+			return statement_status;
+
+		push_statement(function, statement);
+
+		if(parser->token_index >= parser->token_size){
+			perror(TOKEN_LIST_END);
+			return EXIT_FAILURE;
+		}
+	}
+
+	//we have a LBrace here
+	parser_next(parser);
+
+	return 0;
+}
+
+int parse_statement(Statement* statement, Parser* parser){
+	int index = parser->token_index;
+
+	if(index >= parser->token_size){
+		perror(TOKEN_LIST_END);
+		return EXIT_FAILURE;
+	}
+	else if(parser_is_token_valid(parser, TOKEN_RETURN)){
+		statement->type = RETURN;
+		index = parser_next(parser);
+		if(index == -1){
+      perror(TOKEN_LIST_END);
+      return EXIT_FAILURE;
+    }
+    //parse the remaining return statement
+    int parse_status = parse_return_statement(statement, parser);
+    if(parse_status != 0)
+      return parse_status;
+
+	}
+	return 0;//if everything goes well
+
+}
+
+int parse_return_statement(Statement* statement, Parser* parser){
+  //this will definitely be a valid token
+  int index = parser->token_index;
+  Expression* expression = initialize_expression(parser->TOKEN_LIST[index]);
+  //expression starts at this index
+  while(!parser_is_token_valid(parser, TOKEN_SEMI)){
+    // take this token and push it into the expression
+    expression->size++;
+    index = parser_next(parser);
+    if(index == -1){
+      perror(TOKEN_LIST_END);
+      return EXIT_FAILURE;
+    }
+  }
+  statement->expression = expression;
+  parser_next(parser);
+  //go to the next token for the next statement
+  return 0;
 }

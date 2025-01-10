@@ -6,7 +6,7 @@
 
 typedef struct Constant_Struct {
 	enum TOKEN_TYPE type;
-	//for time being, can only be TOKEN_INT_LIT
+	//for time being, can only be TOKEN_NUMBER_LIT
 	union {
 		int number;
 		char ch;

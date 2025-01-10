@@ -2,7 +2,6 @@
 #define FUNCTION_H
 
 #include "statement.h"
-#include "../parser.h"
 
 
 typedef struct Function_Struct{
@@ -18,8 +17,6 @@ typedef struct Function_Struct{
 Function* initialize_function(char*, char*);
 
 void push_statement(Function*, Statement*);
-
-int parse_function(Function*, Parser*);
 
 void destroy_function(Function**);
 

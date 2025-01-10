@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include "include/lexer.h"
 #include "include/parser.h"
+#include "include/errors.h"
 
 int main(int argc, char* argv[]){
 	if(argc < 2){
@@ -37,7 +38,7 @@ int main(int argc, char* argv[]){
 	}
 
 	initialize_parser(parser, lexer->TOKEN_LIST, lexer->index);
-	
+
 	int parser_status = parse_into_ast(parser);
 
 	destroy_lexer(&lexer);
@@ -45,7 +46,7 @@ int main(int argc, char* argv[]){
 
 	if(parser_status != 0){
 		perror("Parsing failed");
-		return status;
+		return parser_status;
 	}
 
 	return 0;
