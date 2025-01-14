@@ -1,6 +1,7 @@
 #include "program.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include "../errors.h"
 
 Program* initialize_program(){
 	Program* program = (Program*)malloc(sizeof(Program));
@@ -8,8 +9,8 @@ Program* initialize_program(){
 	program->capacity = 5;
 	//initial size of FUNCTION_LIST
 	program->FUNCTION_LIST = (Function**)calloc(program->capacity, sizeof(Function*));
-	if(program->FUNCTION_LIST){
-		perror("Insufficient memory");
+	if(program->FUNCTION_LIST == NULL){
+		perror(NO_MEM);
 		free(program);
 		program = NULL;
 	}

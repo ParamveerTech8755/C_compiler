@@ -4,8 +4,7 @@
 
 Statement* initialize_statement(){
 	Statement* statement = (Statement*)malloc(sizeof(Statement));
-
-	statement->expression = (Expression*)malloc(sizeof(Expression));
+	statement->expression = NULL;
 
 	return statement;
 }

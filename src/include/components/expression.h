@@ -1,8 +1,9 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-#include "constant.h"
 #include "../token.h"
+#include "constant.h"
+#include <stdio.h>
 /*
 Expression can be of multiple types:
 1. Constant
@@ -18,15 +19,13 @@ for time being, support only for constant expressions
 */
 
 typedef struct Expression_Struct {
-  token* startToken;
-  int size;
-  int value;
+  Constant *constant;
+  // Operator *operator;
 } Expression;
+Expression *initialize_expression();
 
-Expression* initialize_expression(token*);
+int evaluate_expression(Expression*, FILE*);
 
-int evaluateExpression(Expression*);
-
-void destroy_expression(Expression**);
+void destroy_expression(Expression **);
 
 #endif

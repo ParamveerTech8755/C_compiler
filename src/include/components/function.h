@@ -2,6 +2,8 @@
 #define FUNCTION_H
 
 #include "statement.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 
 typedef struct Function_Struct{
@@ -17,6 +19,8 @@ typedef struct Function_Struct{
 Function* initialize_function(char*, char*);
 
 void push_statement(Function*, Statement*);
+
+int generate_function_code(Function*, FILE*);
 
 void destroy_function(Function**);
 

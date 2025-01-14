@@ -1,17 +1,21 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
-#include "../token.h"
 #include "../customstring.h"
+#include "../token.h"
 
 typedef struct Constant_Struct {
-	enum TOKEN_TYPE type;
-	//for time being, can only be TOKEN_NUMBER_LIT
-	union {
-		int number;
-		char ch;
-		string* text;
-	} value;
+  enum { INT, CHAR, STRING } type;
+  // for time being, can only be INT
+  union {
+    int number;
+    char ch;
+    char *text;
+  } value;
 } Constant;
+
+Constant *initialize_constant(token *);
+
+void destroy_constant(Constant **);
 
 #endif
