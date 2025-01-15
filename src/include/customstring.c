@@ -19,33 +19,25 @@ string *stringconcat(string *a, string *b) {
   return newString;
 }
 
-int stringlen(char *text) {
+unsigned int stringlen(char *text) {
   // should be '\0' terminated
   if (text == NULL)
     return 0;
 
-  int i = 0;
-  while (*(text + i) != '\0' && i < MAX_STRING_LEN)
+  unsigned int i = 0;
+  while (*(text + i) != '\0')
     i++;
-  if (i == MAX_STRING_LEN && *(text + i) != '\0')
-    return -1; // invalid string
   return i;
 }
 
 void initialize_string(string *newString, char *text) {
-  int length = stringlen(text);
+  unsigned int length = stringlen(text);
 
   newString->length = length;
 
-  if (length == -1) {
-    perror("String size exceeds maximum supported value");
-    newString->length = MAX_STRING_LEN;
-    // only the first MAX_STRING_LEN characters are considered//
-  }
-
   if (text) {
-    newString->str = (char *)malloc((newString->length + 1) * sizeof(char));
-    stringcpy(newString->str, text);
+    newString->str = text;
+    //reference to the same thing
   } else {
     newString->length = 0;
     newString->str = (char *)malloc(sizeof(char));
@@ -148,6 +140,30 @@ int toInteger(char *text) {
 
   return ans;
 }
+
+int isNum(char *str){
+	//check if the string is a number.. if all the consituent characters are numbers
+	char* ptr = str;
+	while(*ptr != '\0'){
+		if(*ptr > '9' || *ptr < '0')
+			return 0;
+		ptr++;
+	}
+	return 1;
+}
+
+
+int isAlpha(char ch){
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+}
+
+int isAlphaNum(char ch){
+    return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9'));
+}
+
+int isOperator(char ch){
+    return (ch == '=' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^');
+};
 
 void destroy_string(string **text_ptr) {
   string *text = *text_ptr;

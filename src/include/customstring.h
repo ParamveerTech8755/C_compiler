@@ -10,13 +10,18 @@ typedef struct custom_string {
 } string;
 
 string *stringconcat(string *, string *);
-int stringlen(char *);
+unsigned int stringlen(char *);
 void initialize_string(string *, char *);
 void stringcpy(char *, char *);
 int stringcmp(char *, char *);
 char *convertCharToCString(char);
 string *toString(int);
 int toInteger(char *);
+int isNum(char *);
+int isAlpha(char);
+int isAlphaNum(char);
+int isOperator(char);
+
 void destroy_string(string **);
 
 #endif
