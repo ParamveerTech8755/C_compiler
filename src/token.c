@@ -3,25 +3,10 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-#define MAXLEN 20
-
-int isNum(char *str){
-	//check if the string is a number.. if all the consituent characters are numbers
-	char* ptr = str;
-	int i = 0;
-	while(*ptr != '\0' && i < MAXLEN){
-		if(*ptr > '9' || *ptr < '0')
-			return 0;
-		ptr++;
-		i++;
-	}
-	return 1;
-}
-
 
 token* create_token(string* value, int row, int col){
-	token *newToken = malloc(sizeof(token));
-	
+	token *newToken = (token*)malloc(sizeof(token));
+
 	//the position of the token in the source file
 	newToken->row = row;
 	newToken->col = col;
@@ -55,10 +40,51 @@ token* create_token(string* value, int row, int col){
 		newToken->type = TOKEN_RETURN;
 	else if(stringcmp(value->str, ";"))
 		newToken->type = TOKEN_SEMI;
-	else//identifier maybe
+	else if(stringcmp(value->str, "+"))
+	   newToken->type = TOKEN_OP_ADD;
+	else if(stringcmp(value->str, "-"))
+	   newToken->type = TOKEN_OP_SUB;
+	else if(stringcmp(value->str, "*"))
+	   newToken->type = TOKEN_OP_MUL;
+	else if(stringcmp(value->str, "/"))
+	   newToken->type = TOKEN_OP_DIV;
+	else if(stringcmp(value->str, "="))
+	    newToken->type = TOKEN_OP_ASGN;
+	else if(stringcmp(value->str, "+="))
+	   newToken->type = TOKEN_OP_ADD_ASGN;
+	else if(stringcmp(value->str, "-="))
+	   newToken->type = TOKEN_OP_SUB_ASGN;
+	else if(stringcmp(value->str, "*="))
+	   newToken->type = TOKEN_OP_MUL_ASGN;
+	else if(stringcmp(value->str, "/="))
+	   newToken->type = TOKEN_OP_DIV_ASGN;
+	else if(stringcmp(value->str, "=="))
+	    newToken->type = TOKEN_OP_EQUALS;
+	else if(stringcmp(value->str, "^"))
+	   newToken->type = TOKEN_OP_EXP;
+	else if(is_valid_identifier(value->str)){//identifier maybe
 		newToken->type = TOKEN_ID;
+	}
+	else{
+	    free(newToken->value);
+		free(newToken);
+		newToken = NULL;
+	}
 
 	return newToken;
+}
+
+int is_valid_identifier(char *value){
+    char *first = value;
+    if(*first != '_' && !isAlpha(*first))
+        return 0;
+    ++first;
+    while(*first != '\0'){
+        if(*first != '_' && !isAlphaNum(*first))
+            return 0;
+        first++;
+    }
+    return 1;
 }
 
 void destroy_token(token** t){

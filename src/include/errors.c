@@ -2,7 +2,6 @@
 #include<stdio.h>
 // #include<stdlib.h>
 
-void printTokenError(int row, int col){
-	printf("Unexpected token at line %d, column %d\n", row, col);
-	perror("Unexpected token");
+void printTokenError(char* text, int row, int col){
+	fprintf(stderr, "Unexpected token %s at line %d, column %d\n", text, row, col);
 }

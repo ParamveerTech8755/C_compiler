@@ -41,8 +41,11 @@ int parse_into_ast(Parser *parser) {
         TOKEN_DATA_TYPE) // this token is TOKEN_DATA_TYPE
       return_type = (*(token_list + parser->token_index))->value;
     else {
-      printTokenError(token_list[parser->token_index]->row,
-                      token_list[parser->token_index]->col);
+        printTokenError(
+            token_list[parser->token_index]->value,
+            token_list[parser->token_index]->row,
+            token_list[parser->token_index]->col
+        );
       return EXIT_FAILURE;
     }
 
@@ -52,8 +55,11 @@ int parse_into_ast(Parser *parser) {
       return EXIT_FAILURE;
     } else if ((token_list[parser->token_index]->type != TOKEN_MAIN &&
                 token_list[parser->token_index]->type != TOKEN_ID)) {
-      printTokenError(token_list[parser->token_index]->row,
-                      token_list[parser->token_index]->col);
+      printTokenError(
+        token_list[parser->token_index]->value,
+        token_list[parser->token_index]->row,
+        token_list[parser->token_index]->col
+      );
       return EXIT_FAILURE;
     } else
       name = token_list[parser->token_index]->value;
@@ -91,7 +97,7 @@ int parse_function(Function *function, Parser *parser) {
 
   // check for opening parenthesis
   if (!parser_is_token_valid(parser, TOKEN_RPAREN)) {
-    printTokenError(token_list[index]->row, token_list[index]->col);
+    printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
     index = parser_next(parser);
@@ -103,7 +109,7 @@ int parse_function(Function *function, Parser *parser) {
     perror(TOKEN_LIST_END);
     return EXIT_FAILURE;
   } else if (!parser_is_token_valid(parser, TOKEN_LPAREN)) {
-    printTokenError(token_list[index]->row, token_list[index]->col);
+    printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
     index = parser_next(parser);
@@ -114,7 +120,7 @@ int parse_function(Function *function, Parser *parser) {
     return EXIT_FAILURE;
   }
   if (!parser_is_token_valid(parser, TOKEN_RBRACE)) {
-    printTokenError(token_list[index]->row, token_list[index]->col);
+    printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
     index = parser_next(parser);

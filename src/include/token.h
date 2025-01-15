@@ -17,8 +17,22 @@ enum TOKEN_TYPE {
 	TOKEN_STRING_LIT,
 	TOKEN_SEMI,
 	TOKEN_ID,
-	TOKEN_UNDEFINED,
+	//operators
+	TOKEN_OP_ADD, // +
+	TOKEN_OP_SUB, // -
+	TOKEN_OP_MUL, // *
+	TOKEN_OP_DIV, // /
+	TOKEN_OP_EXP, // ^
+	TOKEN_OP_ASGN, // =
+	TOKEN_OP_EQUALS, // ==,
+	TOKEN_OP_DIV_ASGN, // /=
+	TOKEN_OP_ADD_ASGN, // +=
+	TOKEN_OP_SUB_ASGN, // -=
+	TOKEN_OP_MUL_ASGN, // *=
+	TOKEN_OP_INCRE, //++
+	TOKEN_OP_DECRE, //--
 };
+//all these operators must be supported in lexing, however parsing them may not be supported for time being
 
 typedef struct TOKEN_STRUCT{
 	int row;
@@ -28,6 +42,8 @@ typedef struct TOKEN_STRUCT{
 } token;
 
 token* create_token(string*, int, int);
+
+int is_valid_identifier(char*);
 
 void destroy_token(token**);
 

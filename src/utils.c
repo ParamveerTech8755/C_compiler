@@ -7,8 +7,8 @@
 
 int generate_code(Parser *parser, char *source_file, char *output_file) {
   if(output_file == NULL){
-    int len = stringlen(source_file);
-    int end, i = len-1;
+    unsigned int len = stringlen(source_file);
+    unsigned int end, i = len-1;
 
     while(source_file[i] != '.')
         i--;

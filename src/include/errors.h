@@ -7,6 +7,6 @@
 #define FILE_W_ERR "Error writing to file"
 
 
-void printTokenError(int row, int col);
+void printTokenError(char*, int, int);
 
 #endif
