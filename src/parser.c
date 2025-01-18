@@ -1,9 +1,11 @@
 #include "include/parser.h"
-#include "include/components/constant.h"
+#include "include/components/expression.h"
 #include "include/components/program.h"
 #include "include/components/statement.h"
+#include "include/customstring.h"
 #include "include/errors.h"
 #include "include/token.h"
+#include "include/utils.h"
 #include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,8 +39,7 @@ int parse_into_ast(Parser *parser) {
     char *return_type, *name;
     return_type = name = NULL;
 
-    if ((*(token_list + parser->token_index))->type ==
-        TOKEN_DATA_TYPE) // this token is TOKEN_DATA_TYPE
+    if ((*(token_list + parser->token_index))->type == TOKEN_DATA_TYPE || (*(token_list + parser->token_index))->type == TOKEN_VOID)
       return_type = (*(token_list + parser->token_index))->value;
     else {
         printTokenError(
@@ -53,8 +54,7 @@ int parse_into_ast(Parser *parser) {
     if (parser->token_index >= parser->token_size) {
       perror(TOKEN_LIST_END);
       return EXIT_FAILURE;
-    } else if ((token_list[parser->token_index]->type != TOKEN_MAIN &&
-                token_list[parser->token_index]->type != TOKEN_ID)) {
+    } else if (token_list[parser->token_index]->type != TOKEN_ID) {
       printTokenError(
         token_list[parser->token_index]->value,
         token_list[parser->token_index]->row,
@@ -75,7 +75,6 @@ int parse_into_ast(Parser *parser) {
     int function_status = parse_function(function, parser);
     if (function_status != 0)
       return function_status;
-
     push_function(parser->ast_root, function);
   }
 
@@ -176,17 +175,24 @@ int parse_return_statement(Statement *statement, Parser *parser) {
   // this will definitely be a valid token
 
   if(!parser_is_token_valid(parser, TOKEN_SEMI)){
-      Expression *expression = initialize_expression();
-      int exp_status = parse_expression(expression, parser);
-      if(exp_status != 0)
-        return exp_status;
-
+      Expression* expression = parse_expression(parser);
+      printf("parse_expression done\n");
+      fflush(stdout);
+      if(expression == NULL){
+          fprintf(stderr, "exited from parse_return_statement\n");
+          return EXIT_FAILURE;
+      }
       statement->expression = expression;
   }
 
-  //expecting a semi colon... fine
-  if(parser->token_index >= parser->token_size || !parser_is_token_valid(parser, TOKEN_SEMI)){
+  //expecting a semi colon...
+  if(parser->token_index >= parser->token_size ){
       perror(TOKEN_LIST_END);
+      return EXIT_FAILURE;
+  }
+  if(!parser_is_token_valid(parser, TOKEN_SEMI)){
+      token* tk = parser->TOKEN_LIST[parser->token_index];
+      printTokenError(tk->value, tk->row, tk->col);
       return EXIT_FAILURE;
   }
 
@@ -196,10 +202,86 @@ int parse_return_statement(Statement *statement, Parser *parser) {
 }
 
 
-int parse_expression(Expression *expression, Parser *parser){
-    //fr time being // only constants.. fine
-    Constant* constant = initialize_constant(parser->TOKEN_LIST[parser->token_index]);
-    expression->constant = constant;
+Expression* parse_expression(Parser *parser){
+    Expression* acc = parse_term(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_ADD || cur->type == TOKEN_OP_SUB){
+        char op = *cur->value;
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_term(parser);
+        if(right == NULL)
+            return NULL;
+        cur = parser->TOKEN_LIST[parser->token_index];
+        acc = create_op_node(op, acc, right);
+    }
+    return acc;
+}
+
+
+Expression* parse_term(Parser* parser){
+    Expression* acc = parse_factor(parser);
+    if(acc == NULL)
+        return NULL;
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_MUL || cur->type == TOKEN_OP_DIV){
+        char op = *cur->value;
+        int index = parser_next(parser);
+
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_factor(parser);
+        if(right == NULL)
+            return NULL;
+        cur = parser->TOKEN_LIST[parser->token_index];
+        acc = create_op_node(op, acc, right);
+    }
+    return acc;
+}
+
+Expression* parse_factor(Parser* parser){
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    Expression* result;
+    if(cur->type == TOKEN_RPAREN){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        result = parse_expression(parser);
+
+        if(result == NULL)
+            return NULL;//there was some error
+
+        cur = parser->TOKEN_LIST[parser->token_index];
+        if(cur->type != TOKEN_LPAREN){
+            printTokenError(cur->value, cur->row, cur->col);
+            return NULL;
+        }
+    }
+    else if(cur->type == TOKEN_NUMBER_LIT){
+        //fine
+        result = create_number_node(toInteger(cur->value));
+    }
+    else if(cur->type == TOKEN_ID){
+        //fine
+        printf("token_id: %s\n", cur->value);
+        result = create_identifier_node(cur);
+    }
+
     parser_next(parser);
-    return 0;
+    return result;
+}
+
+Expression* parse_power(Parser* parser){
+
+    return NULL;
 }

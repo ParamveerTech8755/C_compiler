@@ -5,7 +5,6 @@
 //ifndef prevents this file to be included multiple times in the final exe file
 enum TOKEN_TYPE {
 	TOKEN_DATA_TYPE,
-	TOKEN_MAIN,
 	TOKEN_RPAREN,
 	TOKEN_LPAREN,
 	TOKEN_VOID,

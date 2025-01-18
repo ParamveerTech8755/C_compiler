@@ -26,7 +26,13 @@ int parse_statement(Statement *, Parser *);
 
 int parse_return_statement(Statement *, Parser *);
 
-int parse_expression(Expression*, Parser*);
+Expression* parse_expression(Parser*);
+
+Expression* parse_term(Parser*);
+
+Expression* parse_power(Parser*);
+
+Expression* parse_factor(Parser*);
 
 void destroy_parser(Parser **);
 

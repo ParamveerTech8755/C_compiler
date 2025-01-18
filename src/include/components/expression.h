@@ -2,29 +2,38 @@
 #define EXPRESSION_H
 
 #include "../token.h"
-#include "constant.h"
 #include <stdio.h>
-/*
-Expression can be of multiple types:
-1. Constant
-2. unary operator, constant
-3. unary operator, expression
-4. constant, binary operator, constant
-5. expression, binary op, constant
-6. expression, binary op, expression
-7. constant, binary op, expression
 
-for time being, support only for constant expressions
+enum NODE_TYPE {
+    NODE_NUMBER,
+    NODE_ID,//in case of variable
+    NODE_OPERATOR,
+    NODE_CHAR
+};
 
-*/
 
 typedef struct Expression_Struct {
-  Constant *constant;
-  // Operator *operator;
+  enum NODE_TYPE type;
+  union {
+      int value;
+      char ch;
+      struct {
+          char op;
+          struct Expression_Struct* left;
+          struct Expression_Struct* right;
+      }node;
+  };
 } Expression;
+
 Expression *initialize_expression();
 
-int evaluate_expression(Expression*, FILE*);
+void generate_expression_asm(Expression*, FILE*);
+
+Expression* create_op_node(char, Expression*, Expression*);
+
+Expression* create_number_node(int);
+
+Expression* create_identifier_node(token*);
 
 void destroy_expression(Expression **);
 

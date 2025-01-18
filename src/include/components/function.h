@@ -20,7 +20,7 @@ Function* initialize_function(char*, char*);
 
 void push_statement(Function*, Statement*);
 
-int generate_function_code(Function*, FILE*);
+void generate_function_code(Function*, FILE*);
 
 void destroy_function(Function**);
 

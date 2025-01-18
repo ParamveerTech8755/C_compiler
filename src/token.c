@@ -22,9 +22,7 @@ token* create_token(string* value, int row, int col){
 	}
 	///if not a number literal
 
-	if(stringcmp(value->str, "main"))
-		newToken->type = TOKEN_MAIN;
-	else if(stringcmp(value->str, "{"))
+	if(stringcmp(value->str, "{"))
 		newToken->type = TOKEN_RBRACE;
 	else if(stringcmp(value->str, "}"))
 		newToken->type = TOKEN_LBRACE;
@@ -70,9 +68,12 @@ token* create_token(string* value, int row, int col){
 	    newToken->type = TOKEN_OP_GRT;
 	else if(stringcmp(value->str, ">="))
 	    newToken->type = TOKEN_OP_GRT_EQL;
-	else if(is_valid_identifier(value->str)){//identifier maybe
+	else if(stringcmp(value->str, "++"))
+	   newToken->type = TOKEN_OP_INCRE;
+	else if(stringcmp(value->str, "--"))
+	    newToken->type = TOKEN_OP_DECRE;
+	else if(is_valid_identifier(value->str))//identifier maybe
 		newToken->type = TOKEN_ID;
-	}
 	else{
 	    free(newToken->value);
 		free(newToken);

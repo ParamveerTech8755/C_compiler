@@ -6,12 +6,13 @@
 
 typedef struct custom_string {
   char *str;
-  int length;
+  unsigned int length;
 } string;
 
 string *stringconcat(string *, string *);
 unsigned int stringlen(char *);
 void initialize_string(string *, char *);
+void initialize_with_char(string *, char);
 void stringcpy(char *, char *);
 int stringcmp(char *, char *);
 char *convertCharToCString(char);

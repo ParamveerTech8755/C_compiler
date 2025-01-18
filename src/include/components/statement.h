@@ -16,6 +16,8 @@ typedef struct Statment_Struct {
 
 Statement* initialize_statement();
 
+void generate_return_statement_asm(Statement*, FILE*);
+
 void destroy_statement(Statement**);
 
 

@@ -46,7 +46,6 @@ int lex_source_code(Lexer *lexer) {
 
   string *text = lexer->text;
   while ((*thisChar = fgetc(file)) != EOF) { // Read character by character
-
     if (*thisChar == 10 || *thisChar == 13 || *thisChar == ' ' || *thisChar == '\t') {
 
       if (text->length > 0) {
@@ -75,10 +74,10 @@ int lex_source_code(Lexer *lexer) {
         }
         push_token(lexer, t);
       }
-      char *str = convertCharToCString(*thisChar);
 
       free(text->str);
-      initialize_string(text, str);
+      text->str = convertCharToCString(*thisChar);
+      text->length = 1;
       token *t = create_token(text, lexer->row, lexer->col);
       if (t == NULL) {
         printTokenError(text->str, lexer->row, lexer->col);
@@ -92,15 +91,10 @@ int lex_source_code(Lexer *lexer) {
     else if(isOperator(*thisChar)){
         if(text->length > 0){
             if((*thisChar == '=' && isOperator(lastChar)) || (*thisChar == '+' && lastChar == '+') || (*thisChar == '-' && lastChar == '-')){
-                char* character = convertCharToCString(*thisChar);
                 string* auxString = (string*)malloc(sizeof(string));
-                auxString->length = 1;
-                auxString->str = character;
+                initialize_with_char(auxString, *thisChar);
+
                 lexer->text = stringconcat(text, auxString);
-                free(auxString);
-                free(character);
-                free(text->str);
-                free(text);
                 token* tk = create_token(lexer->text, lexer->row, lexer->col);
                 if(tk == NULL){
                     printTokenError(lexer->text->str, lexer->row, lexer->col);
@@ -136,9 +130,6 @@ int lex_source_code(Lexer *lexer) {
             text->str = convertCharToCString(*thisChar);
             text->length = 1;
         }
-        // char* ch = convertCharToCString(*thisChar);
-        // text->str = ch;
-        // text->length = 1;
 
 
     }
@@ -153,16 +144,9 @@ int lex_source_code(Lexer *lexer) {
             free(text->str);
             initialize_empty_string(text);
         }
-        char *character = convertCharToCString(*thisChar);
-        string *append = (string *)malloc(sizeof(string));
-        append->length = 1;
-        append->str = character;
-
+        string* append = (string*)malloc(sizeof(string));
+        initialize_with_char(append, *thisChar);
         lexer->text = stringconcat(text, append);
-        free(append);
-        free(character);
-        free(text->str);
-        free(text);
         text = lexer->text;
     }
 
@@ -185,7 +169,6 @@ int lex_source_code(Lexer *lexer) {
   return 0;
   // successful
 }
-
 void destroy_lexer(Lexer **lexer_ptr) {
   Lexer *lexer = *lexer_ptr;
   // free(lexer->src);

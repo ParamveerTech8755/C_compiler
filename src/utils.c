@@ -1,11 +1,11 @@
 #include "include/utils.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/components/constant.h"
+#include "include/components/expression.h"
 #include "include/customstring.h"
 #include "include/errors.h"
 
-int generate_code(Parser *parser, char *source_file, char *output_file) {
+void generate_code(Parser *parser, char *source_file, char *output_file) {
   if(output_file == NULL){
     unsigned int len = stringlen(source_file);
     unsigned int end, i = len-1;
@@ -31,33 +31,18 @@ int generate_code(Parser *parser, char *source_file, char *output_file) {
   FILE *file = fopen(output_file, "w");
   if(file == NULL){
       perror(FILE_ERR);
-      return EXIT_FAILURE;
+      return;
   }
-
-  int charsWritten = fprintf(file, "\t.globl main\n");
-  if(charsWritten < 0){
-      perror(FILE_W_ERR);
-      return EXIT_FAILURE;
-  }
-
   Program* program = parser->ast_root;
   //main is the last function
   for(int i = 0; i < program->index; i++){
-      int stat = generate_function_code(program->FUNCTION_LIST[i], file);
-      if(stat < 0){
-          perror(FILE_W_ERR);
-          break;
-      }
+      generate_function_code(program->FUNCTION_LIST[i], file);
   }
 
   fclose(file);
-  return 0;
 }
 
-
-
 void print_ast(Parser *parser) {
-  // go thru the program.. and find all the functions
   Function **functions = parser->ast_root->FUNCTION_LIST;
 
   for (int i = 0; i < parser->ast_root->index; i++) {
@@ -67,25 +52,37 @@ void print_ast(Parser *parser) {
     Statement **statements = functions[i]->STATEMENT_LIST;
     for (int j = 0; j < functions[i]->index; j++) {
       printf("\t");
-      if (statements[i]->type == RETURN) {
-
-        //if it returns constant
-        switch(statements[i]->expression->constant->type){
-            case INT:
-                printf("RETURN <%d>\n", statements[i]->expression->constant->value.number);
-                break;
-            case CHAR:
-                printf("RETURN <%c>\n", statements[i]->expression->constant->value.ch);
-                break;
-            case STRING:
-                printf("RETURN <%s>\n", statements[i]->expression->constant->value.text);
-                break;
-            default:
-                perror("Invalid constant.");
-                return;
-        }
+      if (statements[i]->type == RETURN){
+          printf("RETURN < ");
+          print_expression(statements[i]->expression);
+          printf(" >\n");
       }
+
       printf("\n");
     }
   }
+}
+
+
+void print_expression(Expression* expression){
+    if(expression == NULL){
+        printf("VOID");
+    }
+    if(expression->type == NODE_NUMBER){
+        printf("%d", expression->value);
+    }
+    else if(expression->type == NODE_OPERATOR){
+        // string *left, *op, *right, *begin, *end;
+        // begin = (string*)malloc(sizeof(string));
+        // initialize_with_char(begin, '(');
+        printf("(");
+
+        print_expression(expression->node.left);
+        printf("%c", expression->node.op);
+        print_expression(expression->node.right);
+
+        printf(")");
+
+    }
+
 }

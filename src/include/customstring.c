@@ -16,6 +16,11 @@ string *stringconcat(string *a, string *b) {
 
   // terminate the new string
   *ptr = '\0';
+  // free(a->str);
+  // free(b->str);
+  // free(a);
+  // free(b);
+
   return newString;
 }
 
@@ -95,10 +100,6 @@ string *toString(int num) {
     t->length = 1;
 
     string *temp = stringconcat(t, result);
-    free(result->str);
-    free(result);
-    free(t->str);
-    free(t);
     result = temp;
   }
 
@@ -165,6 +166,10 @@ int isOperator(char ch){
     return (ch == '=' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^');
 };
 
+void initialize_with_char(string *text, char ch){
+    text->str = convertCharToCString(ch);
+    text->length = 1;
+}
 void destroy_string(string **text_ptr) {
   string *text = *text_ptr;
   free(text->str);

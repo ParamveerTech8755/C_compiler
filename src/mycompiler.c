@@ -40,30 +40,20 @@ int main(int argc, char *argv[]) {
 
   initialize_parser(parser, lexer->TOKEN_LIST, lexer->index);
 
-  int parser_status = parse_into_ast(parser);
+  int exit_code = parse_into_ast(parser);
 
-  if (parser_status == 0)
+  if(exit_code != 0)
+      fprintf(stderr, "Parsing failed\n");
+  else {
     print_ast(parser);
 
-  int asm_status = 0;
-  if (argc < 2)
-    asm_status = generate_code(parser, argv[1], NULL);
-  else
-    asm_status = generate_code(parser, argv[1], argv[2]);
+    (argc < 2) ? generate_code(parser, argv[1], NULL) : generate_code(parser, argv[1], argv[2]);
+
+  }
 
   destroy_lexer(&lexer);
   destroy_parser(&parser);
 
-  if (parser_status != 0) {
-    perror("Parsing failed");
-    return parser_status;
-  }
 
-  if (asm_status != 0) {
-    perror("Failed to generate assembly");
-    return asm_status;
-  } else
-    printf("assembly generated successfully\n");
-
-  return 0;
+  return exit_code;
 }
