@@ -21,9 +21,11 @@ enum TOKEN_TYPE {
 	TOKEN_OP_SUB, // -
 	TOKEN_OP_MUL, // *
 	TOKEN_OP_DIV, // /
-	TOKEN_OP_EXP, // ^
+	TOKEN_OP_MOD, // %
+	TOKEN_OP_BIT_XOR, // ^
 	TOKEN_OP_ASGN, // =
 	TOKEN_OP_EQUALS, // ==,
+	TOKEN_OP_NOT_EQL, // !=
 	TOKEN_OP_DIV_ASGN, // /=
 	TOKEN_OP_ADD_ASGN, // +=
 	TOKEN_OP_SUB_ASGN, // -=
@@ -34,6 +36,20 @@ enum TOKEN_TYPE {
 	TOKEN_OP_GRT_EQL, // >=
 	TOKEN_OP_LSR, // <
 	TOKEN_OP_LSR_EQL, // <=
+	TOKEN_OP_AND, // &&
+	TOKEN_OP_OR, // ||
+	TOKEN_OP_NOT, // !
+	TOKEN_OP_BIT_NOT, // ~
+	TOKEN_OP_AMP, // &
+	TOKEN_OP_BIT_OR, // |
+	TOKEN_DB_QUOTE, // "
+	TOKEN_SG_QUOTE, // '
+	TOKEN_B_SLASH, /* \ */
+	TOKEN_OP_BIT_XOR_ASGN, // ^=
+	TOKEN_OP_BIT_AND_ASGN, // &=
+	TOKEN_OP_BIT_OP_ASGN, // |=
+	TOKEN_OP_MOD_ASGN, // %=
+
 };
 //all these operators must be supported in lexing, however parsing them may not be supported for time being
 

@@ -1,5 +1,5 @@
 #include "customstring.h"
-#include "utils.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -163,8 +163,11 @@ int isAlphaNum(char ch){
 }
 
 int isOperator(char ch){
-    return (ch == '=' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^');
-};
+    return (
+        ch == '=' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^' ||
+        ch == '|' || ch == '&' || ch == '%' || ch == '!' || ch == '>' || ch == '<'
+    );
+}
 
 void initialize_with_char(string *text, char ch){
     text->str = convertCharToCString(ch);
