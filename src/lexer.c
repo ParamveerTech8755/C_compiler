@@ -88,9 +88,13 @@ int lex_source_code(Lexer *lexer) {
       free(text->str);
       initialize_empty_string(text);
     }
-    else if(isOperator(*thisChar)){
+    else if(isOperator(*thisChar) || *thisChar == '~'){
         if(text->length > 0){
-            if((*thisChar == '=' && isOperator(lastChar)) || (*thisChar == '+' && lastChar == '+') || (*thisChar == '-' && lastChar == '-')){
+            if(
+                (*thisChar == '=' && isOperator(lastChar)) || (*thisChar == '+' && lastChar == '+') ||
+                (*thisChar == '-' && lastChar == '-') || (*thisChar == '&' && lastChar == '&') ||
+                (*thisChar == '|' && lastChar == '|')
+            ){
                 string* auxString = (string*)malloc(sizeof(string));
                 initialize_with_char(auxString, *thisChar);
 
@@ -114,8 +118,8 @@ int lex_source_code(Lexer *lexer) {
                 }
                 push_token(lexer, tk);
                 free(text->str);
-                text->str = convertCharToCString(*thisChar);
-                text->length = 1;
+                initialize_with_char(text, *thisChar);
+
             }
             // token *t = create_token(text, lexer->row, lexer->col);
             // if(t == NULL){
@@ -127,8 +131,7 @@ int lex_source_code(Lexer *lexer) {
         }
         else{
             free(text->str);
-            text->str = convertCharToCString(*thisChar);
-            text->length = 1;
+            initialize_with_char(text, *thisChar);
         }
 
 

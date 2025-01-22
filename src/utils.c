@@ -1,9 +1,16 @@
 #include "include/utils.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "include/components/expression.h"
 #include "include/customstring.h"
 #include "include/errors.h"
+
+unsigned int getUniqueInt(){
+    static unsigned int x = 0;
+    x++;
+    return x;
+}
 
 void generate_code(Parser *parser, char *source_file, char *output_file) {
   if(output_file == NULL){
@@ -33,11 +40,19 @@ void generate_code(Parser *parser, char *source_file, char *output_file) {
       perror(FILE_ERR);
       return;
   }
+  //for time begin.. the only function is main
+  fprintf(file, ".section .text\n");
   Program* program = parser->ast_root;
+  for(int i = 0; i < program->index; i++)
+      fprintf(file, "\t.globl %s\n", program->FUNCTION_LIST[i]->name);
+
   //main is the last function
   for(int i = 0; i < program->index; i++){
       generate_function_code(program->FUNCTION_LIST[i], file);
   }
+
+  //add error handling
+  fprintf(file, "_overflow:\n\tmov $60, %%rax\n\tmov $%d, %%rdi\n\tsyscall\n", INT_MAX);
 
   fclose(file);
 }
@@ -71,18 +86,33 @@ void print_expression(Expression* expression){
     if(expression->type == NODE_NUMBER){
         printf("%d", expression->value);
     }
-    else if(expression->type == NODE_OPERATOR){
+    else if(expression->type == NODE_UNARY_OPERATOR){
+        printf("(");
+        printf("%s", (expression->node.tk)->value);
+        print_expression(expression->node.child);
+        printf(")");
+    }
+    else if(expression->type == NODE_BINARY_OPERATOR){
         // string *left, *op, *right, *begin, *end;
         // begin = (string*)malloc(sizeof(string));
         // initialize_with_char(begin, '(');
         printf("(");
 
         print_expression(expression->node.left);
-        printf("%c", expression->node.op);
+        printf("%s", (expression->node.tk)->value);
         print_expression(expression->node.right);
 
         printf(")");
 
     }
 
+}
+
+
+int isNonCommutative(enum TOKEN_TYPE type){
+    return (
+        type == TOKEN_OP_MOD || type == TOKEN_OP_DIV || type == TOKEN_OP_SUB ||
+        type == TOKEN_OP_GRT || type == TOKEN_OP_GRT_EQL || type == TOKEN_OP_LSR ||
+        type == TOKEN_OP_LSR_EQL
+    );
 }

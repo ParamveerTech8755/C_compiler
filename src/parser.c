@@ -6,7 +6,6 @@
 #include "include/errors.h"
 #include "include/token.h"
 #include "include/utils.h"
-#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -42,6 +41,7 @@ int parse_into_ast(Parser *parser) {
     if ((*(token_list + parser->token_index))->type == TOKEN_DATA_TYPE || (*(token_list + parser->token_index))->type == TOKEN_VOID)
       return_type = (*(token_list + parser->token_index))->value;
     else {
+        printf("BT hai\n");
         printTokenError(
             token_list[parser->token_index]->value,
             token_list[parser->token_index]->row,
@@ -55,6 +55,7 @@ int parse_into_ast(Parser *parser) {
       perror(TOKEN_LIST_END);
       return EXIT_FAILURE;
     } else if (token_list[parser->token_index]->type != TOKEN_ID) {
+        printf("yaha BT hai\n");
       printTokenError(
         token_list[parser->token_index]->value,
         token_list[parser->token_index]->row,
@@ -96,6 +97,7 @@ int parse_function(Function *function, Parser *parser) {
 
   // check for opening parenthesis
   if (!parser_is_token_valid(parser, TOKEN_RPAREN)) {
+      printf("nahi idhar hai\n");
     printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
@@ -108,6 +110,7 @@ int parse_function(Function *function, Parser *parser) {
     perror(TOKEN_LIST_END);
     return EXIT_FAILURE;
   } else if (!parser_is_token_valid(parser, TOKEN_LPAREN)) {
+      printf("idhar hai\n");
     printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
@@ -119,6 +122,7 @@ int parse_function(Function *function, Parser *parser) {
     return EXIT_FAILURE;
   }
   if (!parser_is_token_valid(parser, TOKEN_RBRACE)) {
+      printf("here 1\n");
     printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
@@ -173,25 +177,18 @@ int parse_statement(Statement *statement, Parser *parser) {
 
 int parse_return_statement(Statement *statement, Parser *parser) {
   // this will definitely be a valid token
-
   if(!parser_is_token_valid(parser, TOKEN_SEMI)){
       Expression* expression = parse_expression(parser);
-      printf("parse_expression done\n");
-      fflush(stdout);
       if(expression == NULL){
-          fprintf(stderr, "exited from parse_return_statement\n");
           return EXIT_FAILURE;
       }
       statement->expression = expression;
   }
+  //if TOKEN_LIST ends with the expression, it returns NULL
 
-  //expecting a semi colon...
-  if(parser->token_index >= parser->token_size ){
-      perror(TOKEN_LIST_END);
-      return EXIT_FAILURE;
-  }
   if(!parser_is_token_valid(parser, TOKEN_SEMI)){
       token* tk = parser->TOKEN_LIST[parser->token_index];
+      printf("here 2\n");
       printTokenError(tk->value, tk->row, tk->col);
       return EXIT_FAILURE;
   }
@@ -201,15 +198,194 @@ int parse_return_statement(Statement *statement, Parser *parser) {
   return 0;
 }
 
+Expression* parse_expression(Parser* parser){
+    Expression* acc = parse_logical_and_expression(parser);
+    if(acc == NULL)
+        return NULL;
 
-Expression* parse_expression(Parser *parser){
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_OR){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_logical_and_expression(parser);
+        if(right == NULL)
+            return NULL;
+        acc = create_bop_node(cur, acc, right);
+        cur = parser->TOKEN_LIST[parser->token_index];
+    }
+
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    return acc;
+}
+
+Expression* parse_logical_and_expression(Parser* parser){
+    Expression* acc = parse_bitwise_or_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_AND){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_bitwise_or_expression(parser);
+        if(right == NULL)
+            return NULL;
+        acc = create_bop_node(cur, acc, right);
+        cur = parser->TOKEN_LIST[parser->token_index];
+    }
+
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    return acc;
+}
+
+Expression* parse_bitwise_or_expression(Parser* parser){
+    Expression* acc = parse_bitwise_xor_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_BIT_OR){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_bitwise_xor_expression(parser);
+        if(right == NULL)
+            return NULL;
+        acc = create_bop_node(cur, acc, right);
+        cur = parser->TOKEN_LIST[parser->token_index];
+    }
+
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    return acc;
+}
+
+Expression* parse_bitwise_xor_expression(Parser* parser){
+    Expression* acc = parse_bitwise_and_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_BIT_XOR){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_bitwise_and_expression(parser);
+        if(right == NULL)
+            return NULL;
+        acc = create_bop_node(cur, acc, right);
+        cur = parser->TOKEN_LIST[parser->token_index];
+    }
+
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    return acc;
+}
+
+Expression* parse_bitwise_and_expression(Parser* parser){
+    Expression* acc = parse_equality_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_AMP){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_equality_expression(parser);
+        if(right == NULL)
+            return NULL;
+        acc = create_bop_node(cur, acc, right);
+        cur = parser->TOKEN_LIST[parser->token_index];
+    }
+
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    return acc;
+}
+
+Expression* parse_equality_expression(Parser* parser){
+    Expression* acc = parse_comparative_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_EQUALS || cur->type == TOKEN_OP_NOT_EQL){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_comparative_expression(parser);
+        if(right == NULL)
+            return NULL;
+        acc = create_bop_node(cur, acc, right);
+        cur = parser->TOKEN_LIST[parser->token_index];
+    }
+
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    return acc;
+}
+Expression* parse_comparative_expression(Parser* parser){
+    Expression* acc = parse_additive_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    while(cur->type == TOKEN_OP_GRT || cur->type == TOKEN_OP_GRT_EQL || cur->type == TOKEN_OP_LSR || cur->type == TOKEN_OP_LSR_EQL){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        Expression* right = parse_additive_expression(parser);
+        if(right == NULL)
+            return NULL;
+        acc = create_bop_node(cur, acc, right);
+        cur = parser->TOKEN_LIST[parser->token_index];
+    }
+
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    return acc;
+}
+
+Expression* parse_additive_expression(Parser *parser){
     Expression* acc = parse_term(parser);
     if(acc == NULL)
         return NULL;
 
     token* cur = parser->TOKEN_LIST[parser->token_index];
     while(cur->type == TOKEN_OP_ADD || cur->type == TOKEN_OP_SUB){
-        char op = *cur->value;
         int index = parser_next(parser);
         if(index == -1){
             perror(TOKEN_LIST_END);
@@ -218,8 +394,12 @@ Expression* parse_expression(Parser *parser){
         Expression* right = parse_term(parser);
         if(right == NULL)
             return NULL;
+        acc = create_bop_node(cur, acc, right);
         cur = parser->TOKEN_LIST[parser->token_index];
-        acc = create_op_node(op, acc, right);
+    }
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
     }
     return acc;
 }
@@ -229,9 +409,10 @@ Expression* parse_term(Parser* parser){
     Expression* acc = parse_factor(parser);
     if(acc == NULL)
         return NULL;
+
     token* cur = parser->TOKEN_LIST[parser->token_index];
-    while(cur->type == TOKEN_OP_MUL || cur->type == TOKEN_OP_DIV){
-        char op = *cur->value;
+    while(cur->type == TOKEN_OP_MUL || cur->type == TOKEN_OP_DIV || cur->type == TOKEN_OP_MOD){
+        //mod has the same precedence as * and /
         int index = parser_next(parser);
 
         if(index == -1){
@@ -241,8 +422,12 @@ Expression* parse_term(Parser* parser){
         Expression* right = parse_factor(parser);
         if(right == NULL)
             return NULL;
+        acc = create_bop_node(cur, acc, right);
         cur = parser->TOKEN_LIST[parser->token_index];
-        acc = create_op_node(op, acc, right);
+    }
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
+        return NULL;
     }
     return acc;
 }
@@ -257,27 +442,86 @@ Expression* parse_factor(Parser* parser){
             return NULL;
         }
         result = parse_expression(parser);
-
+        printf("\n\n\n");
+        print_expression(result);
         if(result == NULL)
             return NULL;//there was some error
 
         cur = parser->TOKEN_LIST[parser->token_index];
         if(cur->type != TOKEN_LPAREN){
+            printf("here 3\n");
             printTokenError(cur->value, cur->row, cur->col);
             return NULL;
         }
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+    }
+    else if(cur->type == TOKEN_OP_SUB){//unary - => can be treated as binary operation, 0 - num
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+
+        result = parse_factor(parser);
+        if(result == NULL)
+            return NULL;
+        // printf("this should be ; =>%s\n", parser->TOKEN_LIST[parser->token_index]->value);
+        result = create_uop_node(cur, result);
+    }
+    else if(cur->type == TOKEN_OP_ADD){//uanry + => this can be ignored
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+
+        result = parse_factor(parser);
+    }
+    else if(cur->type == TOKEN_OP_NOT){// ! has the same precedence as unary - and +
+        //now parse the factor right after it
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        result = parse_factor(parser);
+        if(result == NULL)
+            return result;
+
+        result = create_uop_node(cur, result);
+    }
+    else if(cur->type == TOKEN_OP_BIT_NOT){
+        int index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+        result = parse_factor(parser);
+        if(result == NULL)
+            return NULL;
+
+        result = create_uop_node(cur, result);
     }
     else if(cur->type == TOKEN_NUMBER_LIT){
-        //fine
         result = create_number_node(toInteger(cur->value));
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
     }
     else if(cur->type == TOKEN_ID){
         //fine
         printf("token_id: %s\n", cur->value);
         result = create_identifier_node(cur);
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
     }
 
-    parser_next(parser);
     return result;
 }
 

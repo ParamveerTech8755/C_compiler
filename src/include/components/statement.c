@@ -1,4 +1,5 @@
 #include "statement.h"
+#include "expression.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -9,21 +10,35 @@ Statement* initialize_statement(){
 	return statement;
 }
 
-void generate_return_statement_asm(Statement *statement, FILE *file){
+void generate_return_statement_asm(char* function_name, Statement *statement, FILE *file){
 
-    if(statement->expression == NULL){
-        fprintf(file, "\tret");
+    if(stringcmp(function_name, "main")){
+        char* str = "\tmov $60, %%rax\n\tmov $%d, %%rdi\n\tsyscall\n";
+        //then return statement must hand over the control to the OS
+        if(statement->expression == NULL)
+            fprintf(file, str, 0);
+        else if(statement->expression->type == NODE_CHAR)
+            fprintf(file, str, statement->expression->ch);
+        else if(statement->expression->type == NODE_NUMBER)
+            fprintf(file, str, statement->expression->value);
+        else{
+            generate_expression_asm(statement->expression, file);
+            fprintf(file, "\tmov %%rax, %%rdi\n\tmov $60, %%rax\n\tsyscall\n");
+        }
         return;
     }
 
-    if(statement->expression->type == NODE_CHAR){//constant type expression
-        fprintf(file, "\tmovl $\'%c\',\t%%eax\n\tret", statement->expression->ch);
+    if(statement->expression == NULL){
+        fprintf(file, "\tret\n");
+        return;
     }
-    else{
+
+    if(statement->expression->type == NODE_CHAR)//constant type expression
+        fprintf(file, "\tmovl $\'%c\',\t%%eax\n", statement->expression->ch);
+    else
         generate_expression_asm(statement->expression, file);
-        //they might print something to the file.
-        fprintf(file, "\tret");
-    }
+
+    fprintf(file, "\tret\n");
 }
 
 void destroy_statement(Statement** statement_ptr){

@@ -1,6 +1,5 @@
 #include "function.h"
 #include "statement.h"
-#include "../errors.h"
 
 Function* initialize_function(char* return_type, char* name/*, PARAMETER** parameters*/){
 	Function* function = (Function*)malloc(sizeof(Function));
@@ -33,18 +32,12 @@ void generate_function_code(Function *function, FILE *file){
 
     // mark the function global if required.. fine
     //main should always be global
-    if(stringcmp(function->name, "main")){
-        int charsWritten = fprintf(file, "\t.globl %s\n", function->name);
-        if(charsWritten < 0){
-            perror(FILE_W_ERR);
-            return;
-        }
-    }
+
     fprintf(file, "%s:\n", function->name);
     for(int i = 0; i < function->index; i++){
         //go thru all the statements.. fine
         if(function->STATEMENT_LIST[i]->type == RETURN){
-            generate_return_statement_asm(function->STATEMENT_LIST[i], file);
+            generate_return_statement_asm(function->name, function->STATEMENT_LIST[i], file);
             return;
         }
         // else other type of statements

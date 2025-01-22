@@ -59,7 +59,7 @@ token* create_token(string* value, int row, int col){
 	else if(stringcmp(value->str, "=="))
 	    newToken->type = TOKEN_OP_EQUALS;
 	else if(stringcmp(value->str, "^"))
-	   newToken->type = TOKEN_OP_EXP;
+	   newToken->type = TOKEN_OP_BIT_XOR;
 	else if(stringcmp(value->str, "<"))
 	    newToken->type = TOKEN_OP_LSR;
 	else if(stringcmp(value->str, "<="))
@@ -72,6 +72,26 @@ token* create_token(string* value, int row, int col){
 	   newToken->type = TOKEN_OP_INCRE;
 	else if(stringcmp(value->str, "--"))
 	    newToken->type = TOKEN_OP_DECRE;
+	else if(stringcmp(value->str, "&&"))
+	   newToken->type = TOKEN_OP_AND;
+	else if(stringcmp(value->str, "||"))
+	   newToken->type = TOKEN_OP_OR;
+	else if(stringcmp(value->str, "!="))
+	    newToken->type = TOKEN_OP_NOT_EQL;
+	else if(stringcmp(value->str, "%"))
+	   newToken->type = TOKEN_OP_MOD;
+	else if(stringcmp(value->str, "!"))
+	    newToken->type = TOKEN_OP_NOT;
+	else if(stringcmp(value->str, "~"))
+	    newToken->type = TOKEN_OP_BIT_NOT;
+	else if(stringcmp(value->str, "&"))
+	   newToken->type = TOKEN_OP_AMP; //can work as bitwise_and(binary), address_of operator(unary)
+	else if(stringcmp(value->str, "|"))
+        newToken->type = TOKEN_OP_BIT_OR;
+    else if(stringcmp(value->str, "^="))
+        newToken->type = TOKEN_OP_BIT_XOR_ASGN;
+	else if(stringcmp(value->str, "%="))
+	    newToken->type = TOKEN_OP_MOD_ASGN;
 	else if(is_valid_identifier(value->str))//identifier maybe
 		newToken->type = TOKEN_ID;
 	else{
