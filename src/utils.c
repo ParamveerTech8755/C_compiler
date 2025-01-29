@@ -5,11 +5,20 @@
 #include "include/components/expression.h"
 #include "include/customstring.h"
 #include "include/errors.h"
+#include "include/token.h"
 
 unsigned int getUniqueInt(){
     static unsigned int x = 0;
     x++;
     return x;
+}
+
+int isAsgnOperator(enum TOKEN_TYPE type){
+    return (
+        type == TOKEN_OP_ASGN || type == TOKEN_OP_ADD_ASGN || type == TOKEN_OP_SUB_ASGN || type == TOKEN_OP_DIV_ASGN ||
+        type == TOKEN_OP_MUL_ASGN || type == TOKEN_OP_MOD_ASGN || type == TOKEN_OP_BIT_AND_ASGN || type == TOKEN_OP_BIT_OR_ASGN ||
+        type == TOKEN_OP_BIT_XOR_ASGN
+    );
 }
 
 void generate_code(Parser *parser, char *source_file, char *output_file) {

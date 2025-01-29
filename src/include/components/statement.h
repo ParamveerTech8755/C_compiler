@@ -5,6 +5,9 @@
 
 enum STATEMENT_TYPE {
 	RETURN,
+	DECLARATION,
+	ASSIGNMENT,
+	EXPRESSION,
 	//thats it for now
 };
 

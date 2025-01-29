@@ -3,6 +3,7 @@
 
 #include "components/expression.h"
 #include "components/program.h"
+#include "components/statement.h"
 #include "token.h"
 
 typedef struct Parser_Struct {
@@ -26,6 +27,14 @@ int parse_function(Function *, Parser *);
 int parse_statement(Statement *, Parser *);
 
 int parse_return_statement(Statement *, Parser *);
+
+int parse_declaration_statement(Statement*, Parser*);
+
+int parse_assignment_statement(token*, Statement*, Parser*);
+
+int parse_expression_statement(Statement*, Parser*);
+
+Expression* parse_logical_or_expression(Parser*);
 
 Expression* parse_expression(Parser*);
 
