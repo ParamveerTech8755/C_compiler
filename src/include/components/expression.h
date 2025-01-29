@@ -9,15 +9,16 @@ enum NODE_TYPE {
     NODE_ID,//in case of variable
     NODE_BINARY_OPERATOR,
     NODE_UNARY_OPERATOR,
-    NODE_CHAR
+    NODE_CHAR,
+    NODE_ASGN
 };
-
 
 typedef struct Expression_Struct {
   enum NODE_TYPE type;
   union {
       int value;
       char ch;
+      token* identifier;
       struct {
           token* tk;
           union {
@@ -26,6 +27,10 @@ typedef struct Expression_Struct {
                   struct Expression_Struct* right;
               };
               struct Expression_Struct* child;
+              struct {
+                  token* var;
+                  struct Expression_Struct* asign;
+              };
           };
       }node;
   };
@@ -37,6 +42,7 @@ void generate_expression_asm(Expression*, FILE*);
 
 Expression* create_bop_node(token*, Expression*, Expression*);
 Expression* create_uop_node(token* , Expression*);
+Expression* create_asign_node(token*, token*, Expression*);
 
 Expression* create_number_node(int);
 

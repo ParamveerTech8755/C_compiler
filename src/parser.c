@@ -172,7 +172,137 @@ int parse_statement(Statement *statement, Parser *parser) {
     if (parse_status != 0)
       return parse_status;
   }
+  else if(parser_is_token_valid(parser, TOKEN_DATA_TYPE)){
+    statement->type = DECLARATION;//for local variable not for functions(for now)
+    int parse_status = parse_declaration_statement(statement, parser);
+
+    if(parse_status != 0)
+        return parse_status;
+  }
+  else if(parser_is_token_valid(parser, TOKEN_ID)){
+      token* cur = parser->TOKEN_LIST[index];
+      //the variable
+
+      //if not
+      index = parser_next(parser);
+      if(index == -1){
+          perror(TOKEN_LIST_END);
+          return EXIT_FAILURE;
+      }
+      //if it is assignment related?
+      enum TOKEN_TYPE token_type = parser->TOKEN_LIST[index]->type;
+      if(isAsgnOperator(parser->TOKEN_LIST[index]->type)){
+        /* identifier exists in the current scope */
+        statement->type = ASSIGNMENT;
+        int status = parse_assignment_statement(cur, statement, parser);
+        if(status !=  0)
+            return status;
+      }
+      else{
+        statement->type = EXPRESSION;
+        parser->token_index--;
+        int status = parse_expression_statement(statement, parser);
+        if(status !=  0)
+            return status;
+      }
+  }
+  else{
+    int status = parse_expression_statement(statement, parser);
+    if(status !=  0)
+        return status;
+  }
+
   return 0; // if everything goes well
+}
+
+int parse_declaration_statement(Statement* statement, Parser* parser){
+    int index = parser->token_index;
+    token* data_type = parser->TOKEN_LIST[index];
+    index = parser_next(parser);
+
+    if(index == -1){
+        perror(TOKEN_LIST_END);
+        return EXIT_FAILURE;
+    }
+
+    if(!parser_is_token_valid(parser, TOKEN_ID)){
+        token* cur = parser->TOKEN_LIST[index];
+        printTokenError(cur->value, cur->row, cur->col);
+        return EXIT_FAILURE;
+    }
+
+    //save it somewhere
+    index = parser_next(parser);
+    if(index == -1){
+        perror(TOKEN_LIST_END);
+        return EXIT_FAILURE;
+    }
+
+    if(parser_is_token_valid(parser, TOKEN_SEMI))
+        statement->expression = NULL;
+    else if(parser_is_token_valid(parser, TOKEN_OP_ASGN)){
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return EXIT_FAILURE;
+        }
+
+        Expression* exp = parse_expression(parser);
+        if(exp == NULL)
+            return EXIT_FAILURE;
+
+        if(parser->TOKEN_LIST[parser->token_index]->type != TOKEN_SEMI){
+            token* cur = parser->TOKEN_LIST[index];
+            printTokenError(cur->value, cur->row, cur->col);
+            return EXIT_FAILURE;
+        }
+        statement->expression = exp;
+    }
+    else{
+        token* cur = parser->TOKEN_LIST[index];
+        printTokenError(cur->value, cur->row, cur->col);
+        return EXIT_FAILURE;
+    }
+
+    parser_next(parser);
+    return 0;
+}
+
+int parse_assignment_statement(token* LHS_token, Statement* statement, Parser* parser){
+    int index = parser->token_index;
+    token* asgn_operator = parser->TOKEN_LIST[index];
+
+    index = parser_next(parser);
+    if(index == -1){
+        perror(TOKEN_LIST_END);
+        return EXIT_FAILURE;
+    }
+
+    Expression* exp = parse_expression(parser);
+    if(exp == NULL)
+        return EXIT_FAILURE;
+
+    if(!parser_is_token_valid(parser, TOKEN_SEMI))
+        return EXIT_FAILURE;
+
+
+    statement->expression = create_asign_node(asgn_operator, LHS_token, exp);
+    return 0;
+}
+
+int parse_expression_statement(Statement* statement, Parser* parser){
+    Expression* exp = parse_expression(parser);
+    if(exp == NULL)
+        return EXIT_FAILURE;
+
+    if(parser->TOKEN_LIST[parser->token_index]->type != TOKEN_SEMI){
+        token* cur = parser->TOKEN_LIST[parser->token_index];
+        printTokenError(cur->value, cur->row, cur->col);
+        return EXIT_FAILURE;
+    }
+    statement->expression = exp;
+
+    parser_next(parser);
+    return 0;
 }
 
 int parse_return_statement(Statement *statement, Parser *parser) {
@@ -199,6 +329,30 @@ int parse_return_statement(Statement *statement, Parser *parser) {
 }
 
 Expression* parse_expression(Parser* parser){
+    Expression* acc = parse_logical_or_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    token* cur = parser->TOKEN_LIST[parser->token_index];
+    if(isAsgnOperator(cur->type)){
+        if(acc->type != NODE_ID){
+            fprintf(stderr, "Can only assign values to variables.");
+            return NULL;
+        }
+
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+
+        Expression* exp = parse_expression(parser);
+        acc = create_asign_node(cur, acc->node.var, exp);
+    }
+
+    return acc;
+}
+
+Expression* parse_logical_or_expression(Parser* parser){
     Expression* acc = parse_logical_and_expression(parser);
     if(acc == NULL)
         return NULL;
@@ -434,22 +588,18 @@ Expression* parse_term(Parser* parser){
 
 Expression* parse_factor(Parser* parser){
     token* cur = parser->TOKEN_LIST[parser->token_index];
-    Expression* result;
+    Expression* result = NULL;
     if(cur->type == TOKEN_RPAREN){
-        int index = parser_next(parser);
-        if(index == -1){
+        if(parser_next(parser) == -1){
             perror(TOKEN_LIST_END);
             return NULL;
         }
         result = parse_expression(parser);
-        printf("\n\n\n");
-        print_expression(result);
         if(result == NULL)
             return NULL;//there was some error
 
         cur = parser->TOKEN_LIST[parser->token_index];
         if(cur->type != TOKEN_LPAREN){
-            printf("here 3\n");
             printTokenError(cur->value, cur->row, cur->col);
             return NULL;
         }
@@ -521,11 +671,8 @@ Expression* parse_factor(Parser* parser){
             return NULL;
         }
     }
+    else
+        printTokenError(cur->value, cur->row, cur->col);
 
     return result;
-}
-
-Expression* parse_power(Parser* parser){
-
-    return NULL;
 }

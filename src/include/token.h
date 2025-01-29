@@ -47,7 +47,7 @@ enum TOKEN_TYPE {
 	TOKEN_B_SLASH, /* \ */
 	TOKEN_OP_BIT_XOR_ASGN, // ^=
 	TOKEN_OP_BIT_AND_ASGN, // &=
-	TOKEN_OP_BIT_OP_ASGN, // |=
+	TOKEN_OP_BIT_OR_ASGN, // |=
 	TOKEN_OP_MOD_ASGN, // %=
 
 };

@@ -12,7 +12,7 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
 
 # Add the executable
-add_executable(mycompiler src/token.c src/lexer.c src/parser.c src/utils.c src/mycompiler.c src/include/customstring.c src/include/errors.c src/include/components/program.c src/include/components/function.c src/include/components/statement.c src/include/components/expression.c)
+add_executable(mycompiler src/symboltable.c src/token.c src/lexer.c src/parser.c src/utils.c src/mycompiler.c src/include/customstring.c src/include/errors.c src/include/components/program.c src/include/components/function.c src/include/components/statement.c src/include/components/expression.c)
 
 # Include additional directories if needed
 include_directories(src)

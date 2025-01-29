@@ -12,13 +12,55 @@ Expression* initialize_expression(){
 void generate_expression_asm(Expression *expression, FILE *file){
     //assuming i only have INT_LITERALS till now//
     if(expression->type == NODE_ID){
-        //variable
+        //find the location of the variable
+        fprintf(file, "\tmovl location, %%eax\n");
         return;
     }
     else if(expression->type == NODE_NUMBER){
         //move the number in accumulator
         fprintf(file, "\tmovl $%d, %%eax\n", expression->value);
         return;
+    }
+    else if(expression->type == NODE_ASGN){
+        //evaluate the value that has to be assigned to the variable
+        generate_expression_asm(expression->node.asign, file);
+
+        //get the memory location of the variable
+
+        token* asign_operator = expression->node.tk;
+        if(asign_operator->type != TOKEN_OP_ASGN){
+            switch(asign_operator->type){
+                case TOKEN_OP_ADD_ASGN:
+                    fprintf(file, "\taddl location, %%eax\n");
+                    break;
+                case TOKEN_OP_SUB_ASGN:
+                    fprintf(file, "\tsubl location, %%eax\n");
+                    break;
+                case TOKEN_OP_MUL_ASGN:
+                    fprintf(file, "\timull location, %%eax\n");
+                    break;
+                case TOKEN_OP_DIV_ASGN:
+                    fprintf(file, "\tmovl %%eax, %%ebx\n\tmovl location, %%eax\n\tcdq\n\tidivl %%ebx\n");
+                    break;
+                case TOKEN_OP_MOD_ASGN:
+                    fprintf(file, "\tmovl %%eax, %%ebx\n\tmovl location, %%eax\n\tcdq\n\tidivl %%ebx\n");
+                    //result in %edx unlike the rest cases
+                    fprintf(file, "\tmovl %%edx, location\n");
+                    return;
+                case TOKEN_OP_BIT_XOR_ASGN:
+                    fprintf(file, "\txorl location, %%eax\n");
+                    break;
+                case TOKEN_OP_BIT_AND_ASGN:
+                    fprintf(file, "\tandl location, %%eax\n");
+                    break;
+                case TOKEN_OP_BIT_OR_ASGN:
+                    fprintf(file, "\torl location, %%eax\n");
+                    break;
+                default:
+                    return;
+            }
+        }
+        fprintf(file, "\tjo _overflow\n\tmovl %%eax, location\n");
     }
     else if(expression->type == NODE_BINARY_OPERATOR){
         generate_expression_asm(expression->node.left, file);
@@ -162,6 +204,16 @@ Expression* create_uop_node(token* tk, Expression* child){
     return exp;
 }
 
+Expression* create_asign_node(token* operator, token* variable, Expression* assignment){
+    Expression* exp = initialize_expression();
+    exp->type = NODE_ASGN;
+    exp->node.tk = operator;
+    exp->node.var = variable;
+    exp->node.asign = assignment;
+
+    return exp;
+}
+
 Expression* create_number_node(int number){
     Expression* exp = initialize_expression();
     exp->type = NODE_NUMBER;
@@ -172,12 +224,25 @@ Expression* create_number_node(int number){
 
 Expression* create_identifier_node(token* tk){
     Expression* exp = initialize_expression();
-    //do something with the token
+    exp->identifier = tk;
     exp->type = NODE_ID;
     return exp;
 }
 
-void destory_expression(Expression** expression_ptr){
+void destroy_expression(Expression** expression_ptr){
+    Expression* exp = *expression_ptr;
+
+    if(exp->type == NODE_BINARY_OPERATOR){
+        destroy_expression(&exp->node.left);
+        destroy_expression(&exp->node.right);
+    }
+    else if(exp->type == NODE_UNARY_OPERATOR){
+        destroy_expression(&exp->node.child);
+    }
+    else if(exp->type == NODE_ASGN){
+        destroy_expression(&exp->node.asign);
+    }
+
     free(*expression_ptr);
 	*expression_ptr = NULL;
 }

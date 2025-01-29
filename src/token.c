@@ -92,6 +92,10 @@ token* create_token(string* value, int row, int col){
         newToken->type = TOKEN_OP_BIT_XOR_ASGN;
 	else if(stringcmp(value->str, "%="))
 	    newToken->type = TOKEN_OP_MOD_ASGN;
+	else if(stringcmp(value->str, "|="))
+	   newToken->type = TOKEN_OP_BIT_OR_ASGN;
+	else if(stringcmp(value->str, "&="))
+	    newToken->type = TOKEN_OP_BIT_AND_ASGN;
 	else if(is_valid_identifier(value->str))//identifier maybe
 		newToken->type = TOKEN_ID;
 	else{
