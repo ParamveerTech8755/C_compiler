@@ -24,13 +24,13 @@ int parser_is_token_valid(Parser *, enum TOKEN_TYPE);
 // all the parsers go here
 int parse_function(Function *, Parser *);
 
-int parse_statement(Statement *, Parser *);
+int parse_statement(Statement *, Function *, Parser *);
 
 int parse_return_statement(Statement *, Parser *);
 
-int parse_declaration_statement(Statement*, Parser*);
+int parse_declaration_statement(Statement*, Function *, Parser*);
 
-int parse_assignment_statement(token*, Statement*, Parser*);
+int parse_assignment_statement(Expression*, Statement*, Parser*);
 
 int parse_expression_statement(Statement*, Parser*);
 

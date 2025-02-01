@@ -6,6 +6,7 @@
 #include "include/errors.h"
 #include "include/token.h"
 #include "include/utils.h"
+#include "include/symboltable.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -136,7 +137,7 @@ int parse_function(Function *function, Parser *parser) {
   while (!parser_is_token_valid(parser, TOKEN_LBRACE)) {
     Statement *statement = initialize_statement();
 
-    int statement_status = parse_statement(statement, parser);
+    int statement_status = parse_statement(statement, function, parser);
     if (statement_status != 0)
       return statement_status;
 
@@ -154,7 +155,7 @@ int parse_function(Function *function, Parser *parser) {
   return 0;
 }
 
-int parse_statement(Statement *statement, Parser *parser) {
+int parse_statement(Statement *statement, Function* function, Parser *parser) {
   int index = parser->token_index;
 
   if (index >= parser->token_size) {
@@ -174,7 +175,7 @@ int parse_statement(Statement *statement, Parser *parser) {
   }
   else if(parser_is_token_valid(parser, TOKEN_DATA_TYPE)){
     statement->type = DECLARATION;//for local variable not for functions(for now)
-    int parse_status = parse_declaration_statement(statement, parser);
+    int parse_status = parse_declaration_statement(statement, function, parser);
 
     if(parse_status != 0)
         return parse_status;
@@ -193,8 +194,18 @@ int parse_statement(Statement *statement, Parser *parser) {
       enum TOKEN_TYPE token_type = parser->TOKEN_LIST[index]->type;
       if(isAsgnOperator(parser->TOKEN_LIST[index]->type)){
         /* identifier exists in the current scope */
+        extern SymbolTable* symbolTable;
         statement->type = ASSIGNMENT;
-        int status = parse_assignment_statement(cur, statement, parser);
+        Symbol* symbol = lookup_symbol_table(symbolTable, cur->value);
+        if(symbol == NULL){
+            printUndefinedVariable(cur->value, cur->row, cur->col);
+            return EXIT_FAILURE;
+        }
+        int size = findSize(symbol->type);
+
+        Expression* var = create_identifier_node(cur, symbol->stack_offset, size);
+
+        int status = parse_assignment_statement(var, statement, parser);
         if(status !=  0)
             return status;
       }
@@ -207,6 +218,7 @@ int parse_statement(Statement *statement, Parser *parser) {
       }
   }
   else{
+    statement->type = EXPRESSION;
     int status = parse_expression_statement(statement, parser);
     if(status !=  0)
         return status;
@@ -215,7 +227,8 @@ int parse_statement(Statement *statement, Parser *parser) {
   return 0; // if everything goes well
 }
 
-int parse_declaration_statement(Statement* statement, Parser* parser){
+int parse_declaration_statement(Statement* statement, Function* function, Parser* parser){
+    extern SymbolTable* symbolTable;
     int index = parser->token_index;
     token* data_type = parser->TOKEN_LIST[index];
     index = parser_next(parser);
@@ -232,6 +245,19 @@ int parse_declaration_statement(Statement* statement, Parser* parser){
     }
 
     //save it somewhere
+    int sizeInBytes = findSize(data_type->value);
+    if(function->maxVariableSize < sizeInBytes)
+        function->maxVariableSize = sizeInBytes;
+    function->variableCnt++;
+    function->stack_offset -= sizeInBytes;
+
+    if(sizeInBytes > 1)
+        function->stack_offset -= function->stack_offset%sizeInBytes + sizeInBytes;
+    //anything larger than 1 must be aligned
+
+    Expression* id = create_identifier_node(parser->TOKEN_LIST[index], function->stack_offset, sizeInBytes);
+    insert_symbol(symbolTable, function->stack_offset, id->identifier.tk, data_type->value);
+
     index = parser_next(parser);
     if(index == -1){
         perror(TOKEN_LIST_END);
@@ -239,9 +265,11 @@ int parse_declaration_statement(Statement* statement, Parser* parser){
     }
 
     if(parser_is_token_valid(parser, TOKEN_SEMI))
-        statement->expression = NULL;
+        statement->expression = id;
     else if(parser_is_token_valid(parser, TOKEN_OP_ASGN)){
-        if(parser_next(parser) == -1){
+        statement->expression = create_asign_node(parser->TOKEN_LIST[index], id, NULL);
+
+        if((index = parser_next(parser)) == -1){
             perror(TOKEN_LIST_END);
             return EXIT_FAILURE;
         }
@@ -250,15 +278,19 @@ int parse_declaration_statement(Statement* statement, Parser* parser){
         if(exp == NULL)
             return EXIT_FAILURE;
 
-        if(parser->TOKEN_LIST[parser->token_index]->type != TOKEN_SEMI){
+        index = parser->token_index;
+        if(parser->TOKEN_LIST[index]->type != TOKEN_SEMI){
             token* cur = parser->TOKEN_LIST[index];
+            printf("here 1\n");
             printTokenError(cur->value, cur->row, cur->col);
             return EXIT_FAILURE;
         }
-        statement->expression = exp;
+
+        statement->expression->node.asign = exp;
     }
     else{
         token* cur = parser->TOKEN_LIST[index];
+        printf("here 2\n");
         printTokenError(cur->value, cur->row, cur->col);
         return EXIT_FAILURE;
     }
@@ -267,10 +299,9 @@ int parse_declaration_statement(Statement* statement, Parser* parser){
     return 0;
 }
 
-int parse_assignment_statement(token* LHS_token, Statement* statement, Parser* parser){
+int parse_assignment_statement(Expression* LHS_token, Statement* statement, Parser* parser){
     int index = parser->token_index;
     token* asgn_operator = parser->TOKEN_LIST[index];
-
     index = parser_next(parser);
     if(index == -1){
         perror(TOKEN_LIST_END);
@@ -286,6 +317,7 @@ int parse_assignment_statement(token* LHS_token, Statement* statement, Parser* p
 
 
     statement->expression = create_asign_node(asgn_operator, LHS_token, exp);
+    parser_next(parser);
     return 0;
 }
 
@@ -318,7 +350,7 @@ int parse_return_statement(Statement *statement, Parser *parser) {
 
   if(!parser_is_token_valid(parser, TOKEN_SEMI)){
       token* tk = parser->TOKEN_LIST[parser->token_index];
-      printf("here 2\n");
+      printf("here 3\n");
       printTokenError(tk->value, tk->row, tk->col);
       return EXIT_FAILURE;
   }
@@ -663,9 +695,13 @@ Expression* parse_factor(Parser* parser){
         }
     }
     else if(cur->type == TOKEN_ID){
-        //fine
-        printf("token_id: %s\n", cur->value);
-        result = create_identifier_node(cur);
+        extern SymbolTable* symbolTable;
+        Symbol* symbol = lookup_symbol_table(symbolTable, cur->value);
+        if(symbol == NULL){
+            printUndefinedVariable(cur->value, cur->row, cur->col);
+            return NULL;
+        }
+        result = create_identifier_node(cur, symbol->stack_offset, findSize(symbol->type));
         if(parser_next(parser) == -1){
             perror(TOKEN_LIST_END);
             return NULL;

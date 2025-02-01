@@ -54,6 +54,14 @@ void destroy_symbol(Symbol* symbol){
     free(symbol);
 }
 
+int findSize(char* data_type){
+    int size = INT_SIZE;
+    if(stringcmp(data_type, "char"))
+        size = CHAR_SIZE;
+    //else if// other types
+    return size;
+}
+
 void destroy_symbol_table(SymbolTable **symbolTable_ptr){
 
     for(int i = 0; i < HASHMAP_SIZE; i++){

@@ -2,8 +2,11 @@
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/utils.h"
+#include "include/symboltable.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+SymbolTable* symbolTable;
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
@@ -31,10 +34,13 @@ int main(int argc, char *argv[]) {
     printf("%s\n", (*(lexer->TOKEN_LIST + i))->value);
   printf("###token list ends###\n\n");
 
+  symbolTable = create_symbol_table();
+
   Parser *parser = (Parser *)malloc(sizeof(Parser));
   if (parser == NULL) {
     perror(NO_MEM);
     destroy_lexer(&lexer);
+    destroy_symbol_table(&symbolTable);
     return EXIT_FAILURE;
   }
 
@@ -53,6 +59,7 @@ int main(int argc, char *argv[]) {
 
   destroy_lexer(&lexer);
   destroy_parser(&parser);
+  destroy_symbol_table(&symbolTable);
 
 
   return exit_code;

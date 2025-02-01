@@ -3,6 +3,9 @@
 
 #define HASHMAP_SIZE 10 //for now
 
+#define INT_SIZE 4
+#define CHAR_SIZE 1
+
 #include "token.h"
 
 typedef struct Symbol_Struct{
@@ -28,5 +31,7 @@ SymbolTable* create_symbol_table();
 void destroy_symbol(Symbol*);
 
 void destroy_symbol_table(SymbolTable**);
+
+int findSize(char*);
 
 #endif

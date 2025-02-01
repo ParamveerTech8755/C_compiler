@@ -18,7 +18,11 @@ typedef struct Expression_Struct {
   union {
       int value;
       char ch;
-      token* identifier;
+      struct {
+        token* tk;
+        int sizeInBytes;
+        int stack_offset;
+      }identifier;
       struct {
           token* tk;
           union {
@@ -28,7 +32,7 @@ typedef struct Expression_Struct {
               };
               struct Expression_Struct* child;
               struct {
-                  token* var;
+                  struct Expression_Struct* var;
                   struct Expression_Struct* asign;
               };
           };
@@ -42,11 +46,11 @@ void generate_expression_asm(Expression*, FILE*);
 
 Expression* create_bop_node(token*, Expression*, Expression*);
 Expression* create_uop_node(token* , Expression*);
-Expression* create_asign_node(token*, token*, Expression*);
+Expression* create_asign_node(token*, Expression*, Expression*);
 
 Expression* create_number_node(int);
 
-Expression* create_identifier_node(token*);
+Expression* create_identifier_node(token*, int, int);
 
 void destroy_expression(Expression **);
 

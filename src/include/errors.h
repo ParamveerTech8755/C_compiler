@@ -8,5 +8,5 @@
 
 
 void printTokenError(char*, int, int);
-
+void printUndefinedVariable(char*, int, int);
 #endif

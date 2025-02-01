@@ -3,11 +3,7 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	movl $4, -8(%rbp)
-	movl -8(%rbp), %eax
-	movl $1, %ebx
-	addl %ebx, %eax
-	jo _overflow
+	movl $6, %eax
 	mov %rbp, %rsp
 	pop %rbp
 	ret

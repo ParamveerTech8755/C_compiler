@@ -12,6 +12,10 @@ typedef struct Function_Struct{
 	char* name; // = token->value
 	int index;
 	int capacity;
+	int variableCnt;
+	int maxVariableSize;
+	int stack_offset;
+
 	// Parameter** PARAMETER_LIST; array of parameters/arguments along with their data types.. fine
 	Statement** STATEMENT_LIST;
 } Function;

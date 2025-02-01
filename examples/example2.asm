@@ -1,7 +1,8 @@
 .section .text
 	.globl main
 main:
-	movl $2, %eax
+	pushq %rbp
+	movq %rsp, %rbp	movl $2, %eax
 	movl $5, %ebx
 	imull %ebx, %eax
 	jo _overflow
@@ -37,9 +38,9 @@ main:
 	pop %rbx
 	addl %ebx, %eax
 	jo _overflow
-	mov %rax, %rdi
-	mov $60, %rax
-	syscall
+	mov %%rbp, %%rsp
+	pop %%rbp
+	ret
 _overflow:
 	mov $60, %rax
 	mov $2147483647, %rdi

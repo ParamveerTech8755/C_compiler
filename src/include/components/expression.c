@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../utils.h"
+#include "../symboltable.h"
 
 
 Expression* initialize_expression(){
@@ -12,8 +13,14 @@ Expression* initialize_expression(){
 void generate_expression_asm(Expression *expression, FILE *file){
     //assuming i only have INT_LITERALS till now//
     if(expression->type == NODE_ID){
-        //find the location of the variable
-        fprintf(file, "\tmovl location, %%eax\n");
+        if(expression->identifier.sizeInBytes == INT_SIZE)
+            fprintf(file, "\tmovl %d(%%rbp), %%eax\n", expression->identifier.stack_offset);
+        else if(expression->identifier.sizeInBytes == CHAR_SIZE)
+            fprintf(file, "\txorl %%eax, %%eax\n\tmovb %d(%%rbp), %%al\n", expression->identifier.stack_offset);
+        return;
+    }
+    else if(expression->type == NODE_CHAR){
+        fprintf(file, "\tmovl $%d, %%eax\n", expression->ch);
         return;
     }
     else if(expression->type == NODE_NUMBER){
@@ -31,36 +38,41 @@ void generate_expression_asm(Expression *expression, FILE *file){
         if(asign_operator->type != TOKEN_OP_ASGN){
             switch(asign_operator->type){
                 case TOKEN_OP_ADD_ASGN:
-                    fprintf(file, "\taddl location, %%eax\n");
+                    fprintf(file, "\taddl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
                     break;
                 case TOKEN_OP_SUB_ASGN:
-                    fprintf(file, "\tsubl location, %%eax\n");
+                    fprintf(file, "\tsubl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
                     break;
                 case TOKEN_OP_MUL_ASGN:
-                    fprintf(file, "\timull location, %%eax\n");
+                    fprintf(file, "\timull %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
                     break;
                 case TOKEN_OP_DIV_ASGN:
-                    fprintf(file, "\tmovl %%eax, %%ebx\n\tmovl location, %%eax\n\tcdq\n\tidivl %%ebx\n");
+                    fprintf(
+                        file,
+                        "\tmovl %%eax, %%ebx\n\tmovl %d(%%rbp), %%eax\n\tcdq\n\tidivl %%ebx\n\tmovl %%eax, %d(%%rbp)\n",
+                        expression->node.var->identifier.stack_offset,
+                        expression->node.var->identifier.stack_offset
+                    );
                     break;
                 case TOKEN_OP_MOD_ASGN:
-                    fprintf(file, "\tmovl %%eax, %%ebx\n\tmovl location, %%eax\n\tcdq\n\tidivl %%ebx\n");
+                    fprintf(file, "\tmovl %%eax, %%ebx\n\tmovl %d(%%rbp), %%eax\n\tcdq\n\tidivl %%ebx\n", expression->node.var->identifier.stack_offset);
                     //result in %edx unlike the rest cases
-                    fprintf(file, "\tmovl %%edx, location\n");
+                    fprintf(file, "\tmovl %%edx, %d(%%rbp)\n\tjo _overflow\n", expression->node.var->identifier.stack_offset);
                     return;
                 case TOKEN_OP_BIT_XOR_ASGN:
-                    fprintf(file, "\txorl location, %%eax\n");
+                    fprintf(file, "\txorl %d(%%rbp), %%eax\n", expression->node.var->identifier.stack_offset);
                     break;
                 case TOKEN_OP_BIT_AND_ASGN:
-                    fprintf(file, "\tandl location, %%eax\n");
+                    fprintf(file, "\tandl %d(%%rbp), %%eax\n", expression->node.var->identifier.stack_offset);
                     break;
                 case TOKEN_OP_BIT_OR_ASGN:
-                    fprintf(file, "\torl location, %%eax\n");
+                    fprintf(file, "\torl %d(%%rbp), %%eax\n", expression->node.var->identifier.stack_offset);
                     break;
                 default:
                     return;
             }
         }
-        fprintf(file, "\tjo _overflow\n\tmovl %%eax, location\n");
+        fprintf(file, "\tjo _overflow\n\tmovl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
     }
     else if(expression->type == NODE_BINARY_OPERATOR){
         generate_expression_asm(expression->node.left, file);
@@ -204,7 +216,7 @@ Expression* create_uop_node(token* tk, Expression* child){
     return exp;
 }
 
-Expression* create_asign_node(token* operator, token* variable, Expression* assignment){
+Expression* create_asign_node(token* operator, Expression* variable, Expression* assignment){
     Expression* exp = initialize_expression();
     exp->type = NODE_ASGN;
     exp->node.tk = operator;
@@ -222,9 +234,11 @@ Expression* create_number_node(int number){
     return exp;
 }
 
-Expression* create_identifier_node(token* tk){
+Expression* create_identifier_node(token* tk, int stack_offset, int sizeInBytes){
     Expression* exp = initialize_expression();
-    exp->identifier = tk;
+    exp->identifier.tk = tk;
+    exp->identifier.stack_offset = stack_offset;
+    exp->identifier.sizeInBytes = sizeInBytes;
     exp->type = NODE_ID;
     return exp;
 }

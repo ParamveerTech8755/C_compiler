@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "include/components/expression.h"
+#include "include/components/statement.h"
 #include "include/customstring.h"
 #include "include/errors.h"
+#include "include/symboltable.h"
 #include "include/token.h"
 
 unsigned int getUniqueInt(){
@@ -76,12 +78,35 @@ void print_ast(Parser *parser) {
     Statement **statements = functions[i]->STATEMENT_LIST;
     for (int j = 0; j < functions[i]->index; j++) {
       printf("\t");
-      if (statements[i]->type == RETURN){
+      if (statements[j]->type == RETURN){
           printf("RETURN < ");
-          print_expression(statements[i]->expression);
-          printf(" >\n");
+          print_expression(statements[j]->expression);
+          printf(" >");
       }
+      else if(statements[j]->type == DECLARATION){
+            extern SymbolTable* symbolTable;
+            char* name = NULL;
+            if(statements[j]->expression->type == NODE_ID){
+                name = statements[j]->expression->identifier.tk->value;
+                Symbol* symbol = lookup_symbol_table(symbolTable, name);
 
+                //will definitely find it
+                printf("DECLARE < %s > %s", symbol->type, name);
+            }
+            else if(statements[j]->expression->type == NODE_ASGN){
+                name = statements[j]->expression->node.var->identifier.tk->value;
+                Symbol* symbol = lookup_symbol_table(symbolTable, name);
+                printf("DECLARE < %s > %s <- ", symbol->type, name);
+                print_expression(statements[j]->expression->node.asign);
+            }
+      }
+      else if(statements[j]->type == ASSIGNMENT){
+          printf("%s %s ", statements[j]->expression->node.var->identifier.tk->value, statements[j]->expression->node.tk->value);
+          print_expression(statements[j]->expression->node.asign);
+      }
+      else if(statements[j]->type == EXPRESSION){
+          print_expression(statements[i]->expression);
+      }
       printf("\n");
     }
   }
@@ -102,9 +127,6 @@ void print_expression(Expression* expression){
         printf(")");
     }
     else if(expression->type == NODE_BINARY_OPERATOR){
-        // string *left, *op, *right, *begin, *end;
-        // begin = (string*)malloc(sizeof(string));
-        // initialize_with_char(begin, '(');
         printf("(");
 
         print_expression(expression->node.left);
@@ -114,7 +136,19 @@ void print_expression(Expression* expression){
         printf(")");
 
     }
+    else if(expression->type == NODE_CHAR)
+        printf("'%c'", expression->ch);
+    else if(expression->type == NODE_ID)
+        printf("%s", expression->identifier.tk->value);
+    else if(expression->type == NODE_ASGN){
+        printf("(");
 
+        print_expression(expression->node.var);
+        printf("%s", expression->node.tk->value);
+        print_expression(expression->node.asign);
+
+        printf(")");
+    }
 }
 
 
