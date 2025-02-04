@@ -1,6 +1,7 @@
 #include "statement.h"
 #include "expression.h"
 #include "../symboltable.h"
+#include "../utils.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -10,6 +11,30 @@ Statement* initialize_statement(){
 
 	return statement;
 }
+
+void generate_statement_asm(Statement* statement, unsigned int x, FILE* file){
+    switch(statement->type){
+        case RETURN:
+            generate_return_statement_asm(statement, x, file);
+            break;
+            //break; once conditional statements are implemented
+        case DECLARATION:
+            generate_declaration_statement_asm(statement, file);
+            break;
+        case ASSIGNMENT:
+            generate_assignment_statement_asm(statement, file);
+            break;
+        case IF:
+            generate_if_statement_asm(statement, x, file);
+            break;
+        case EXPRESSION:
+            generate_expression_asm(statement->expression, file);
+            break;
+        default:
+            break;
+    }
+}
+
 //utility function
 void generate_assignment_asm(Expression* id, Expression* exp, FILE* file){
     char ch;
@@ -22,29 +47,30 @@ void generate_assignment_asm(Expression* id, Expression* exp, FILE* file){
     else if(exp->type == NODE_ID){
         int var_offset = id->identifier.stack_offset;
         int asign_offset = exp->identifier.stack_offset;
+        char* regs[] = {"%eax", "%al"};
+        int reg = 1;
+        ch = 'b';
 
         if(id->identifier.sizeInBytes != exp->identifier.sizeInBytes){
-            ch = 'b';
             //only the least significant byte of the number has to be moved
             if(exp->identifier.sizeInBytes == CHAR_SIZE){
-                fprintf(file, "\txorl %d(%%rbp), %d(%%rbp)\n", var_offset, var_offset);
+                fprintf(file, "\tmovl $0, %d(%%rbp)\n", var_offset);
                 var_offset += INT_SIZE - CHAR_SIZE;
             }
             else if(exp->identifier.sizeInBytes == INT_SIZE)
                 asign_offset += INT_SIZE - CHAR_SIZE;
         }
-        else if(id->identifier.sizeInBytes == CHAR_SIZE)
-            ch = 'b';
-        else if(id->identifier.sizeInBytes == INT_SIZE)
+        else if(id->identifier.sizeInBytes == INT_SIZE){
             ch = 'l';
-
-        fprintf(file, "\tmov%c %d(%%rbp), %d(%%rbp)\n", ch, asign_offset, var_offset);
+            reg = 0;
+        }
+        fprintf(file, "\tmov%c %d(%%rbp), %s\n\tmov%c %s, %d(%%rbp)\n", ch, asign_offset, regs[reg], ch, regs[reg], var_offset);
     }
     else if(exp->type == NODE_CHAR){
         ch = 'b';
         if(id->identifier.sizeInBytes == INT_SIZE)
             ch = 'l';
-        fprintf(file, "\tmov%c $%d, %d(%%rbp)\n", ch, exp->value, id->identifier.stack_offset);
+        fprintf(file, "\tmov%c $'%s', %d(%%rbp)\n", ch, exp->ch, id->identifier.stack_offset);
     }
     else{
         generate_expression_asm(exp, file);
@@ -53,12 +79,27 @@ void generate_assignment_asm(Expression* id, Expression* exp, FILE* file){
 
 }
 
+void generate_if_statement_asm(Statement* statement, unsigned int y, FILE* file){
+    unsigned int x = getUniqueInt();
+    generate_expression_asm(statement->conditional.expression, file);
+    fprintf(file, "\tcmpl $0, %%eax\n\tjz false%u\n", x);
+    generate_statement_asm(statement->conditional.when_true, y, file);
+    int has_else = statement->conditional.when_false != NULL;
+    if(has_else)
+        fprintf(file, "\tjmp end%u\n", x);
+    fprintf(file, "false%u:\n", x);
+    if(has_else){
+        generate_statement_asm(statement->conditional.when_false, y, file);
+        fprintf(file, "end%u:\n", x);
+    }
+    return;
+}
 
 void generate_declaration_statement_asm(Statement* statement, FILE* file){
-
     if(statement->expression->type == NODE_ASGN)
         generate_assignment_asm(statement->expression->node.var, statement->expression->node.asign, file);
 
+    //shift the stackOffset
     //else expression->type is NODE_ID
     //space has already been made in the stack, nothing to do
 }
@@ -117,20 +158,15 @@ void generate_assignment_statement_asm(Statement *statement, FILE *file){
     }
 }
 
-void generate_return_statement_asm(Statement *statement, FILE *file){
-    char* epilogue = "\tmov %rbp, %rsp\n\tpop %rbp\n\tret\n";
-
-    if(statement->expression == NULL){
-        fprintf(file, "%s",epilogue);
-        return;
+void generate_return_statement_asm(Statement *statement, unsigned int x, FILE *file){
+    if(statement->expression != NULL){
+        if(statement->expression->type == NODE_CHAR)//constant type expression
+            fprintf(file, "\tmovl $'%s',\t%%eax\n", statement->expression->ch);
+        else
+            generate_expression_asm(statement->expression, file);
     }
-
-    if(statement->expression->type == NODE_CHAR)//constant type expression
-        fprintf(file, "\tmovl $%d,\t%%eax\n", statement->expression->ch);
-    else
-        generate_expression_asm(statement->expression, file);
-
-    fprintf(file, "%s", epilogue);
+    if(x > 0)
+        fprintf(file, "\tjmp return%u\n", x);
 }
 
 void destroy_statement(Statement** statement_ptr){

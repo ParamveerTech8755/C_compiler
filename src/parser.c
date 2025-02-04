@@ -42,7 +42,6 @@ int parse_into_ast(Parser *parser) {
     if ((*(token_list + parser->token_index))->type == TOKEN_DATA_TYPE || (*(token_list + parser->token_index))->type == TOKEN_VOID)
       return_type = (*(token_list + parser->token_index))->value;
     else {
-        printf("BT hai\n");
         printTokenError(
             token_list[parser->token_index]->value,
             token_list[parser->token_index]->row,
@@ -56,7 +55,6 @@ int parse_into_ast(Parser *parser) {
       perror(TOKEN_LIST_END);
       return EXIT_FAILURE;
     } else if (token_list[parser->token_index]->type != TOKEN_ID) {
-        printf("yaha BT hai\n");
       printTokenError(
         token_list[parser->token_index]->value,
         token_list[parser->token_index]->row,
@@ -98,7 +96,6 @@ int parse_function(Function *function, Parser *parser) {
 
   // check for opening parenthesis
   if (!parser_is_token_valid(parser, TOKEN_RPAREN)) {
-      printf("nahi idhar hai\n");
     printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
@@ -111,7 +108,6 @@ int parse_function(Function *function, Parser *parser) {
     perror(TOKEN_LIST_END);
     return EXIT_FAILURE;
   } else if (!parser_is_token_valid(parser, TOKEN_LPAREN)) {
-      printf("idhar hai\n");
     printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
@@ -123,7 +119,6 @@ int parse_function(Function *function, Parser *parser) {
     return EXIT_FAILURE;
   }
   if (!parser_is_token_valid(parser, TOKEN_RBRACE)) {
-      printf("here 1\n");
     printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
@@ -179,8 +174,8 @@ int parse_statement(Statement *statement, Function* function, Parser *parser) {
 
     if(parse_status != 0)
         return parse_status;
-  }
-  else if(parser_is_token_valid(parser, TOKEN_ID)){
+    }
+    else if(parser_is_token_valid(parser, TOKEN_ID)){
       token* cur = parser->TOKEN_LIST[index];
       //the variable
 
@@ -216,7 +211,14 @@ int parse_statement(Statement *statement, Function* function, Parser *parser) {
         if(status !=  0)
             return status;
       }
-  }
+    }
+    else if(parser_is_token_valid(parser, TOKEN_IF)){
+        statement->type = IF;
+
+        int status = parse_if_statement(statement, function, parser);
+        if(status != 0)
+            return status;
+    }
   else{
     statement->type = EXPRESSION;
     int status = parse_expression_statement(statement, parser);
@@ -225,6 +227,82 @@ int parse_statement(Statement *statement, Function* function, Parser *parser) {
   }
 
   return 0; // if everything goes well
+}
+
+int parse_if_statement(Statement* statement, Function* function, Parser* parser){
+    int index = parser_next(parser);
+
+    if(index == -1){
+        perror(TOKEN_LIST_END);
+        return EXIT_FAILURE;
+    }
+    if(!parser_is_token_valid(parser, TOKEN_RPAREN)){
+        token* cur = parser->TOKEN_LIST[index];
+        printTokenError(cur->value, cur->row, cur->col);
+        return EXIT_FAILURE;
+    }
+    // consume (
+    if((index = parser_next(parser)) == -1){
+        perror(TOKEN_LIST_END);
+        return EXIT_FAILURE;
+    }
+
+    Expression* exp = parse_expression(parser);
+    if(exp == NULL)
+        return EXIT_FAILURE;
+
+    if(!parser_is_token_valid(parser, TOKEN_LPAREN)){
+        token* cur = parser->TOKEN_LIST[parser->token_index];
+        printTokenError(cur->value, cur->row, cur->col);
+        return EXIT_FAILURE;
+    }
+
+    //consume )
+    parser_next(parser);
+    //need not check for end, cause it is checked first in parse_statement
+
+    //now pointng to the statement for if
+    Statement* if_statement = initialize_statement();
+    int status = parse_statement(if_statement, function, parser);
+    if(status != 0)
+        return status;
+    if(if_statement->type == DECLARATION){
+        fprintf(stderr, "Declarations are not statements.");
+        return EXIT_FAILURE;
+    }
+    if(parser_is_token_valid(parser, TOKEN_ELSE)){
+        //consume else
+        index = parser_next(parser);
+        if(index == -1){
+            perror(TOKEN_LIST_END);
+            return EXIT_FAILURE;
+        }
+
+        Statement* else_statement = initialize_statement();
+        if(parser_is_token_valid(parser, TOKEN_IF)){
+            else_statement->type = IF;
+            int status = parse_if_statement(else_statement, function, parser);
+            if(status != 0)
+                return EXIT_FAILURE;
+        }
+        else {
+            int status = parse_statement(else_statement, function, parser);
+            if(status != 0)
+                return status;
+        }
+        if(else_statement->type == DECLARATION){
+            fprintf(stderr, "Declarations are not statements.");
+            return EXIT_FAILURE;
+        }
+        statement->conditional.when_false = else_statement;
+    }
+    else
+        statement->conditional.when_false = NULL;
+
+    statement->conditional.when_true = if_statement;
+    statement->conditional.expression = exp;
+
+    return 0;
 }
 
 int parse_declaration_statement(Statement* statement, Function* function, Parser* parser){
@@ -251,8 +329,9 @@ int parse_declaration_statement(Statement* statement, Function* function, Parser
     function->variableCnt++;
     function->stack_offset -= sizeInBytes;
 
-    if(sizeInBytes > 1)
-        function->stack_offset -= function->stack_offset%sizeInBytes + sizeInBytes;
+    int shift = function->stack_offset%sizeInBytes;
+    if(sizeInBytes > 1 && shift != 0)
+        function->stack_offset -= shift + sizeInBytes;
     //anything larger than 1 must be aligned
 
     Expression* id = create_identifier_node(parser->TOKEN_LIST[index], function->stack_offset, sizeInBytes);
@@ -281,7 +360,6 @@ int parse_declaration_statement(Statement* statement, Function* function, Parser
         index = parser->token_index;
         if(parser->TOKEN_LIST[index]->type != TOKEN_SEMI){
             token* cur = parser->TOKEN_LIST[index];
-            printf("here 1\n");
             printTokenError(cur->value, cur->row, cur->col);
             return EXIT_FAILURE;
         }
@@ -290,7 +368,6 @@ int parse_declaration_statement(Statement* statement, Function* function, Parser
     }
     else{
         token* cur = parser->TOKEN_LIST[index];
-        printf("here 2\n");
         printTokenError(cur->value, cur->row, cur->col);
         return EXIT_FAILURE;
     }
@@ -350,7 +427,6 @@ int parse_return_statement(Statement *statement, Parser *parser) {
 
   if(!parser_is_token_valid(parser, TOKEN_SEMI)){
       token* tk = parser->TOKEN_LIST[parser->token_index];
-      printf("here 3\n");
       printTokenError(tk->value, tk->row, tk->col);
       return EXIT_FAILURE;
   }
@@ -361,7 +437,7 @@ int parse_return_statement(Statement *statement, Parser *parser) {
 }
 
 Expression* parse_expression(Parser* parser){
-    Expression* acc = parse_logical_or_expression(parser);
+    Expression* acc = parse_conditional_expression(parser);
     if(acc == NULL)
         return NULL;
 
@@ -382,6 +458,41 @@ Expression* parse_expression(Parser* parser){
     }
 
     return acc;
+}
+
+Expression* parse_conditional_expression(Parser* parser){
+    Expression* acc = parse_logical_or_expression(parser);
+    if(acc == NULL)
+        return NULL;
+
+    if(!parser_is_token_valid(parser, TOKEN_QUE_MRK))
+        return acc;
+
+    //consume ?
+    int index = parser_next(parser);
+    if(index == -1){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    Expression* when_true = parse_expression(parser);
+    if(when_true == NULL)
+        return NULL;
+    if(!parser_is_token_valid(parser, TOKEN_COLON)){
+        token* cur = parser->TOKEN_LIST[parser->token_index];
+        printTokenError(cur->value, cur->row, cur->col);
+        return NULL;
+    }
+    //consume :
+    if((index = parser_next(parser)) == -1){
+        perror(TOKEN_LIST_END);
+        return NULL;
+    }
+    Expression* when_false = parse_conditional_expression(parser);
+    if(when_false == NULL)
+        return NULL;
+
+    Expression* ternary = create_ternary_node(acc, when_true, when_false);
+    return ternary;
 }
 
 Expression* parse_logical_or_expression(Parser* parser){
@@ -650,7 +761,6 @@ Expression* parse_factor(Parser* parser){
         result = parse_factor(parser);
         if(result == NULL)
             return NULL;
-        // printf("this should be ; =>%s\n", parser->TOKEN_LIST[parser->token_index]->value);
         result = create_uop_node(cur, result);
     }
     else if(cur->type == TOKEN_OP_ADD){//uanry + => this can be ignored
@@ -689,6 +799,13 @@ Expression* parse_factor(Parser* parser){
     }
     else if(cur->type == TOKEN_NUMBER_LIT){
         result = create_number_node(toInteger(cur->value));
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return NULL;
+        }
+    }
+    else if(cur->type == TOKEN_CHAR_LIT){
+        result = create_char_node(cur->value);
         if(parser_next(parser) == -1){
             perror(TOKEN_LIST_END);
             return NULL;

@@ -34,9 +34,13 @@ int parse_assignment_statement(Expression*, Statement*, Parser*);
 
 int parse_expression_statement(Statement*, Parser*);
 
+int parse_if_statement(Statement*, Function*, Parser*);
+
 Expression* parse_logical_or_expression(Parser*);
 
 Expression* parse_expression(Parser*);
+
+Expression* parse_conditional_expression(Parser*);
 
 Expression* parse_logical_and_expression(Parser*);
 

@@ -121,20 +121,57 @@ int lex_source_code(Lexer *lexer) {
                 initialize_with_char(text, *thisChar);
 
             }
-            // token *t = create_token(text, lexer->row, lexer->col);
-            // if(t == NULL){
-            //     printTokenError(lexer->row, lexer->col);
-            //     return EXIT_FAILURE;
-            // }
-            // push_token(lexer, t);
-            // free(text->str);
         }
         else{
             free(text->str);
             initialize_with_char(text, *thisChar);
         }
 
+    }
+    else if(*thisChar == '\''){
+        //consume '
+        if((*thisChar = fgetc(file)) == EOF){
+            fprintf(stderr, EOF_ERROR);
+            return EXIT_FAILURE;
+        }
+        lexer->col++;
+        //push text if exists and clear
+        if(text->length > 0){
+            token* tk = create_token(text, lexer->row, lexer->col);
+            push_token(lexer, tk);
+            free(text->str);
+        }
 
+        initialize_with_char(text, *thisChar);
+
+        if(*thisChar == '\\'){
+            //escape sequence
+            if((*thisChar = fgetc(file)) == EOF){
+                fprintf(stderr, EOF_ERROR);
+                return EXIT_FAILURE;
+            }
+            string* append = (string*)malloc(sizeof(string));
+            initialize_with_char(append, *thisChar);
+            text = lexer->text = stringconcat(text, append);
+            lexer->col++;
+        }
+
+        if((*thisChar = fgetc(file)) == EOF){
+            fprintf(stderr, EOF_ERROR);
+            return EXIT_FAILURE;
+        }
+        lexer->col++;
+
+        //consume '
+        if(*thisChar != '\''){
+            fprintf(stderr, "Character can only hold 1 letter.");
+            return EXIT_FAILURE;
+        }
+        token *tk = create_char_token(text, lexer->row, lexer->col);
+        push_token(lexer, tk);
+
+        free(text->str);
+        initialize_empty_string(text);
     }
     else {
         if(text->length == 1 && isOperator(lastChar)){

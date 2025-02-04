@@ -1,5 +1,6 @@
 #include "function.h"
 #include "statement.h"
+#include "../utils.h"
 
 Function* initialize_function(char* return_type, char* name/*, PARAMETER** parameters*/){
 	Function* function = (Function*)malloc(sizeof(Function));
@@ -33,36 +34,35 @@ void push_statement(Function* function, Statement* statement){
 }
 
 void generate_function_code(Function *function, FILE *file){
+    unsigned int x = getUniqueInt();
+    char* prologue = "%s:\n\tpushq %%rbp\n\tmovq %%rsp, %%rbp\n";
+    char* epilogue = "\tmovq %rbp, %rsp\n\tpopq %rbp\n\tret\n";
 
-    fprintf(file, "%s:\n\tpushq %%rbp\n\tmovq %%rsp, %%rbp\n", function->name);
+    fprintf(file, prologue, function->name);
 
     //assigning memory for local variables
     int stackSize = -1*(function->variableCnt)*(function->maxVariableSize);
     //this must be 8byte aligned for 64bit architecture
-    stackSize -= stackSize%8 + 8;
+    if(stackSize%8 != 0)
+        stackSize -= stackSize%8 + 8;
 
-    if(stackSize > 0)
+    if(stackSize < 0)
         fprintf(file, "\tsubq $%d, %%rsp\n", stackSize);
 
+    int hasCompound = 0;
     for(int i = 0; i < function->index; i++){
-        //go thru all the statements.. fine
-        switch(function->STATEMENT_LIST[i]->type){
-            case RETURN:
-                generate_return_statement_asm(function->STATEMENT_LIST[i], file);
-                return;
-                //break; once conditional statements are implemented
-            case DECLARATION:
-                generate_declaration_statement_asm(function->STATEMENT_LIST[i], file);
-                break;
-            case ASSIGNMENT:
-                generate_assignment_statement_asm(function->STATEMENT_LIST[i], file);
-                break;
-            case EXPRESSION:
-                generate_expression_asm(function->STATEMENT_LIST[i]->expression, file);
-                break;
+        if(function->STATEMENT_LIST[i]->type == IF || function->STATEMENT_LIST[i]->type == FOR)
+            hasCompound = 1;
+        else if(function->STATEMENT_LIST[i]->type == RETURN){
+            generate_statement_asm(function->STATEMENT_LIST[i], 0, file);
+            break;
         }
+        generate_statement_asm(function->STATEMENT_LIST[i], x, file);
+
     }
-        fprintf(file, "\tmovq %%rbp, %%rsp\n\tpopq %%rbp\n\tret\n");
+    if(hasCompound)
+        fprintf(file, "return%u:\n", x);
+    fprintf(file, "%s", epilogue);
 }
 
 

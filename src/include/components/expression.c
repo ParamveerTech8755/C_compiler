@@ -12,21 +12,32 @@ Expression* initialize_expression(){
 
 void generate_expression_asm(Expression *expression, FILE *file){
     //assuming i only have INT_LITERALS till now//
+
     if(expression->type == NODE_ID){
         if(expression->identifier.sizeInBytes == INT_SIZE)
             fprintf(file, "\tmovl %d(%%rbp), %%eax\n", expression->identifier.stack_offset);
-        else if(expression->identifier.sizeInBytes == CHAR_SIZE)
+        else if(expression->identifier.sizeInBytes == CHAR_SIZE){
             fprintf(file, "\txorl %%eax, %%eax\n\tmovb %d(%%rbp), %%al\n", expression->identifier.stack_offset);
+        }
         return;
     }
     else if(expression->type == NODE_CHAR){
-        fprintf(file, "\tmovl $%d, %%eax\n", expression->ch);
+        fprintf(file, "\tmovl $'%s', %%eax\n", expression->ch);
         return;
     }
     else if(expression->type == NODE_NUMBER){
         //move the number in accumulator
         fprintf(file, "\tmovl $%d, %%eax\n", expression->value);
         return;
+    }
+    else if(expression->type == NODE_TERNARY){
+        unsigned int x = getUniqueInt();
+        generate_expression_asm(expression->ternary.exp, file);
+        fprintf(file, "\tcmpl $0, %%eax\n\tjz false%u\n", x);
+        generate_expression_asm(expression->ternary.when_true, file);
+        fprintf(file, "\tjmp end%u\nfalse%u:\n", x, x);
+        generate_expression_asm(expression->ternary.when_false, file);
+        fprintf(file, "end%u:\n", x);
     }
     else if(expression->type == NODE_ASGN){
         //evaluate the value that has to be assigned to the variable
@@ -118,9 +129,10 @@ void generate_expression_asm(Expression *expression, FILE *file){
                 fprintf(file, "\tpop %%rbx\n");//commutative
             }
         }
-        else if((expression->node.right)->type == NODE_NUMBER){
+        else if((expression->node.right)->type == NODE_NUMBER)
             fprintf(file, "\tmovl $%d, %%ebx\n", (expression->node.right)->value);
-        }
+        else if(expression->node.right->type == NODE_CHAR)
+            fprintf(file, "\tmovl $'%s', %%ebx\n", expression->node.right->ch);
 
         //now we have both the results n order eax <op> ebx
         switch((expression->node.tk)->type){
@@ -241,6 +253,23 @@ Expression* create_identifier_node(token* tk, int stack_offset, int sizeInBytes)
     exp->identifier.sizeInBytes = sizeInBytes;
     exp->type = NODE_ID;
     return exp;
+}
+
+Expression* create_ternary_node(Expression* exp, Expression* when_true, Expression* when_false){
+    Expression* result = initialize_expression();
+    result->type = NODE_TERNARY;
+    result->ternary.exp = exp;
+    result->ternary.when_true = when_true;
+    result->ternary.when_false = when_false;
+    return result;
+}
+
+Expression* create_char_node(char* ch){
+    Expression* result = initialize_expression();
+    result->type = NODE_CHAR;
+    result->ch = ch;
+
+    return result;
 }
 
 void destroy_expression(Expression** expression_ptr){

@@ -10,6 +10,7 @@ enum NODE_TYPE {
     NODE_BINARY_OPERATOR,
     NODE_UNARY_OPERATOR,
     NODE_CHAR,
+    NODE_TERNARY,
     NODE_ASGN
 };
 
@@ -17,12 +18,17 @@ typedef struct Expression_Struct {
   enum NODE_TYPE type;
   union {
       int value;
-      char ch;
+      char* ch;
       struct {
         token* tk;
         int sizeInBytes;
         int stack_offset;
       }identifier;
+      struct {
+        struct Expression_Struct* exp;
+        struct Expression_Struct* when_true;
+        struct Expression_Struct* when_false;
+      }ternary;
       struct {
           token* tk;
           union {
@@ -45,10 +51,16 @@ Expression *initialize_expression();
 void generate_expression_asm(Expression*, FILE*);
 
 Expression* create_bop_node(token*, Expression*, Expression*);
+
 Expression* create_uop_node(token* , Expression*);
+
 Expression* create_asign_node(token*, Expression*, Expression*);
 
+Expression* create_ternary_node(Expression*, Expression*, Expression*);
+
 Expression* create_number_node(int);
+
+Expression* create_char_node(char*);
 
 Expression* create_identifier_node(token*, int, int);
 

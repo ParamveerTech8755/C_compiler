@@ -1,6 +1,7 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
+#define EOF_ERROR "Unexpected end of file"
 #define TOKEN_LIST_END "Unexpected end of token list"
 #define NO_MEM "Insufficient Memory"
 #define FILE_ERR "Error opening file"

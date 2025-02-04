@@ -4,6 +4,19 @@
 #include<stdlib.h>
 
 
+token* create_char_token(string* value, int row, int col){
+    token* newToken = (token*)malloc(sizeof(token));
+
+    newToken->row = row;
+    newToken->col = col;
+    newToken->type = TOKEN_CHAR_LIT;
+    newToken->value = (char*)malloc((value->length+1)*sizeof(char));
+
+    stringcpy(newToken->value, value->str);
+
+    return newToken;
+}
+
 token* create_token(string* value, int row, int col){
 	token *newToken = (token*)malloc(sizeof(token));
 
@@ -79,13 +92,13 @@ token* create_token(string* value, int row, int col){
 	else if(stringcmp(value->str, "!="))
 	    newToken->type = TOKEN_OP_NOT_EQL;
 	else if(stringcmp(value->str, "%"))
-	   newToken->type = TOKEN_OP_MOD;
+	    newToken->type = TOKEN_OP_MOD;
 	else if(stringcmp(value->str, "!"))
 	    newToken->type = TOKEN_OP_NOT;
 	else if(stringcmp(value->str, "~"))
 	    newToken->type = TOKEN_OP_BIT_NOT;
 	else if(stringcmp(value->str, "&"))
-	   newToken->type = TOKEN_OP_AMP; //can work as bitwise_and(binary), address_of operator(unary)
+	    newToken->type = TOKEN_OP_AMP; //can work as bitwise_and(binary), address_of operator(unary)
 	else if(stringcmp(value->str, "|"))
         newToken->type = TOKEN_OP_BIT_OR;
     else if(stringcmp(value->str, "^="))
@@ -93,10 +106,22 @@ token* create_token(string* value, int row, int col){
 	else if(stringcmp(value->str, "%="))
 	    newToken->type = TOKEN_OP_MOD_ASGN;
 	else if(stringcmp(value->str, "|="))
-	   newToken->type = TOKEN_OP_BIT_OR_ASGN;
+	    newToken->type = TOKEN_OP_BIT_OR_ASGN;
 	else if(stringcmp(value->str, "&="))
 	    newToken->type = TOKEN_OP_BIT_AND_ASGN;
-	else if(is_valid_identifier(value->str))//identifier maybe
+    else if(stringcmp(value->str, "?"))
+        newToken->type = TOKEN_QUE_MRK;
+    else if(stringcmp(value->str, ":"))
+        newToken->type = TOKEN_COLON;
+    else if(stringcmp(value->str, "\""))
+        newToken->type = TOKEN_DB_QUOTE;
+    else if(stringcmp(value->str, "'"))
+        newToken->type = TOKEN_SG_QUOTE;
+    else if(stringcmp(value->str, "if"))
+        newToken->type = TOKEN_IF;
+    else if(stringcmp(value->str, "else"))
+        newToken->type = TOKEN_ELSE;
+	else if(is_valid_identifier(value->str))
 		newToken->type = TOKEN_ID;
 	else{
 	    free(newToken->value);

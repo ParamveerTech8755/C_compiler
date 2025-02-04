@@ -107,6 +107,12 @@ void print_ast(Parser *parser) {
       else if(statements[j]->type == EXPRESSION){
           print_expression(statements[i]->expression);
       }
+      else if(statements[j]->type == IF){
+          printf("if");
+      }
+      else if(statements[j]->type == FOR){
+          printf("for statement\n");
+      }
       printf("\n");
     }
   }
@@ -137,7 +143,7 @@ void print_expression(Expression* expression){
 
     }
     else if(expression->type == NODE_CHAR)
-        printf("'%c'", expression->ch);
+        printf("'%s'", expression->ch);
     else if(expression->type == NODE_ID)
         printf("%s", expression->identifier.tk->value);
     else if(expression->type == NODE_ASGN){

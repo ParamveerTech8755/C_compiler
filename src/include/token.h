@@ -16,7 +16,11 @@ enum TOKEN_TYPE {
 	TOKEN_STRING_LIT,
 	TOKEN_SEMI,
 	TOKEN_ID,
+	TOKEN_IF,
+	TOKEN_ELSE,
 	//operators
+	TOKEN_QUE_MRK, // ?
+	TOKEN_COLON, // :
 	TOKEN_OP_ADD, // +
 	TOKEN_OP_SUB, // -
 	TOKEN_OP_MUL, // *
@@ -61,6 +65,8 @@ typedef struct TOKEN_STRUCT{
 } token;
 
 token* create_token(string*, int, int);
+
+token* create_char_token(string*, int, int);
 
 int is_valid_identifier(char*);
 
