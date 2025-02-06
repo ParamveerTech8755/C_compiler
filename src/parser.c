@@ -7,6 +7,7 @@
 #include "include/token.h"
 #include "include/utils.h"
 #include "include/symboltable.h"
+#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -96,7 +97,7 @@ int parse_function(Function *function, Parser *parser) {
 
   // check for opening parenthesis
   if (!parser_is_token_valid(parser, TOKEN_RPAREN)) {
-    printTokenError(token_list[parser->token_index]->value, token_list[index]->row, token_list[index]->col);
+    printTokenError(token_list[index]->value, token_list[index]->row, token_list[index]->col);
     return EXIT_FAILURE;
   } else
     index = parser_next(parser);
@@ -129,23 +130,9 @@ int parse_function(Function *function, Parser *parser) {
     return EXIT_FAILURE;
   }
 
-  while (!parser_is_token_valid(parser, TOKEN_LBRACE)) {
-    Statement *statement = initialize_statement();
-
-    int statement_status = parse_statement(statement, function, parser);
-    if (statement_status != 0)
-      return statement_status;
-
-    push_statement(function, statement);
-
-    if (parser->token_index >= parser->token_size) {
-      perror(TOKEN_LIST_END);
-      return EXIT_FAILURE;
-    }
-  }
-
-  // we have a LBrace here
-  parser_next(parser);
+  int status = parse_compound_statement(function->comp_statement, function, parser);
+  if(status != 0)
+      return status;
 
   return 0;
 }
@@ -219,6 +206,21 @@ int parse_statement(Statement *statement, Function* function, Parser *parser) {
         if(status != 0)
             return status;
     }
+    else if(parser_is_token_valid(parser, TOKEN_RBRACE)){
+
+        //consume {
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return EXIT_FAILURE;
+        }
+        statement->type = COMPOUND;
+        statement->compound.capacity = COMPOUND_STATEMENT_CAPACITY;
+        statement->compound.statements = (Statement**)calloc(statement->compound.capacity, sizeof(Statement*));
+        statement->compound.size = 0;
+        int status = parse_compound_statement(statement, function, parser);
+        if(status != 0)
+            return status;
+    }
   else{
     statement->type = EXPRESSION;
     int status = parse_expression_statement(statement, parser);
@@ -251,6 +253,8 @@ int parse_if_statement(Statement* statement, Function* function, Parser* parser)
     if(exp == NULL)
         return EXIT_FAILURE;
 
+    statement->conditional.expression = exp;
+
     if(!parser_is_token_valid(parser, TOKEN_LPAREN)){
         token* cur = parser->TOKEN_LIST[parser->token_index];
         printTokenError(cur->value, cur->row, cur->col);
@@ -258,16 +262,38 @@ int parse_if_statement(Statement* statement, Function* function, Parser* parser)
     }
 
     //consume )
-    parser_next(parser);
-    //need not check for end, cause it is checked first in parse_statement
+    if((index = parser_next(parser)) == -1){
+        perror(TOKEN_LIST_END);
+        return EXIT_FAILURE;
+    }
 
-    //now pointng to the statement for if
-    Statement* if_statement = initialize_statement();
-    int status = parse_statement(if_statement, function, parser);
-    if(status != 0)
-        return status;
-    if(if_statement->type == DECLARATION){
-        fprintf(stderr, "Declarations are not statements.");
+    if(parser_is_token_valid(parser, TOKEN_RBRACE)){
+        //compound statement
+        //consume {
+        if(parser_next(parser) == -1){
+            perror(TOKEN_LIST_END);
+            return EXIT_FAILURE;
+        }
+        statement->conditional.comp_true = initialize_comp_statement(COMPOUND_STATEMENT_CAPACITY);
+        int status = parse_compound_statement(statement->conditional.comp_true, function, parser);
+        if(status != 0)
+            return status;
+    }
+    else{
+        statement->conditional.comp_true = initialize_comp_statement(1);
+        Statement* if_statement = initialize_statement();
+        int status = parse_statement(if_statement, function, parser);
+        if(status != 0)
+            return status;
+        if(if_statement->type == DECLARATION){
+            fprintf(stderr, "Declarations are not statements.");
+            return EXIT_FAILURE;
+        }
+        *statement->conditional.comp_true->compound.statements = if_statement;
+        statement->conditional.comp_true->compound.size++;
+    }
+    if(parser->token_index >= parser->token_size){
+        perror(TOKEN_LIST_END);
         return EXIT_FAILURE;
     }
     if(parser_is_token_valid(parser, TOKEN_ELSE)){
@@ -277,31 +303,67 @@ int parse_if_statement(Statement* statement, Function* function, Parser* parser)
             perror(TOKEN_LIST_END);
             return EXIT_FAILURE;
         }
-
-        Statement* else_statement = initialize_statement();
-        if(parser_is_token_valid(parser, TOKEN_IF)){
-            else_statement->type = IF;
-            int status = parse_if_statement(else_statement, function, parser);
-            if(status != 0)
+        //either if, { or single statement
+        if(parser_is_token_valid(parser, TOKEN_RBRACE)){
+            //consume {
+            if(parser_next(parser) == -1){
+                perror(TOKEN_LIST_END);
                 return EXIT_FAILURE;
-        }
-        else {
-            int status = parse_statement(else_statement, function, parser);
+            }
+            statement->conditional.comp_false = initialize_comp_statement(COMPOUND_STATEMENT_CAPACITY);
+            int status = parse_compound_statement(statement->conditional.comp_false, function, parser);
             if(status != 0)
                 return status;
         }
-        if(else_statement->type == DECLARATION){
-            fprintf(stderr, "Declarations are not statements.");
-            return EXIT_FAILURE;
+        else {
+            statement->conditional.comp_false = initialize_comp_statement(1);
+            Statement* else_statement = initialize_statement();
+            int status = parse_statement(else_statement, function, parser);
+            if(status != 0)
+                return status;
+            if(else_statement->type == DECLARATION){
+                fprintf(stderr, "Declarations are not statements.");
+                return EXIT_FAILURE;
+            }
+            *statement->conditional.comp_false->compound.statements = else_statement;
+            statement->conditional.comp_false->compound.size++;
+
         }
-        statement->conditional.when_false = else_statement;
     }
     else
-        statement->conditional.when_false = NULL;
+        statement->conditional.comp_false = NULL;
 
-    statement->conditional.when_true = if_statement;
-    statement->conditional.expression = exp;
+    return 0;
+}
 
+int parse_compound_statement(Statement *comp_statement, Function *function, Parser *parser){
+    extern SymbolTable* symbolTable;
+    mount_scope(symbolTable);
+
+    while (!parser_is_token_valid(parser, TOKEN_LBRACE)) {
+      Statement *statement = initialize_statement();
+
+      int statement_status = parse_statement(statement, function, parser);
+      if (statement_status != 0)
+        return statement_status;
+
+      push_statement(comp_statement, statement);
+      //push the new statement to the compound statement
+
+      if (parser->token_index >= parser->token_size) {
+        perror(TOKEN_LIST_END);
+        return EXIT_FAILURE;
+      }
+    }
+
+    clear_scope(symbolTable);
+    // we have a LBrace here
+    parser_next(parser);
+
+    return 0;
+}
+
+int parse_for_statement(Statement *statement, Function *function, Parser *parser){
     return 0;
 }
 
@@ -335,7 +397,11 @@ int parse_declaration_statement(Statement* statement, Function* function, Parser
     //anything larger than 1 must be aligned
 
     Expression* id = create_identifier_node(parser->TOKEN_LIST[index], function->stack_offset, sizeInBytes);
-    insert_symbol(symbolTable, function->stack_offset, id->identifier.tk, data_type->value);
+    int status = insert_symbol(symbolTable, function->stack_offset, id->identifier.tk, data_type->value);
+    if(status != 0){
+        fprintf(stderr, "Cannot have two identifiers with the same name in the same scope.");
+        return status;
+    }
 
     index = parser_next(parser);
     if(index == -1){

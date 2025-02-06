@@ -5,9 +5,10 @@
 Function* initialize_function(char* return_type, char* name/*, PARAMETER** parameters*/){
 	Function* function = (Function*)malloc(sizeof(Function));
 
-	function->index = 0;
-	function->capacity = 80;//initial capacity of statements.
-	function->STATEMENT_LIST = (Statement**)calloc(function->capacity, sizeof(Statement*));
+	// function->capacity = COMPOUND_STATEMENT_CAPACITY;//initial capacity of statements.
+	// function->STATEMENT_LIST = (Statement**)calloc(function->capacity, sizeof(Statement*));
+	function->comp_statement = initialize_comp_statement(COMPOUND_STATEMENT_CAPACITY);
+
 	function->name = name;
 	function->return_type = return_type;
 	function->variableCnt = 0;
@@ -18,19 +19,19 @@ Function* initialize_function(char* return_type, char* name/*, PARAMETER** param
 	return function;
 }
 
-void push_statement(Function* function, Statement* statement){
-	if(function->index >= function->capacity){
-		function->capacity *= 2;
+void push_statement(Statement* comp_statement, Statement* statement){
+	if(comp_statement->compound.size >= comp_statement->compound.capacity){
+		comp_statement->compound.capacity *= 2;
 		//assuming the capacity doesnt overflow int data type
-		Statement** temp = (Statement**)calloc(function->capacity, sizeof(Statement*));
-		for(int i = 0; i < function->index; i++)
-			*(temp+i) = *(function->STATEMENT_LIST+i);
+		Statement** temp = (Statement**)calloc(comp_statement->compound.capacity, sizeof(Statement*));
+		for(int i = 0; i < comp_statement->compound.size; i++)
+			*(temp+i) = *(comp_statement->compound.statements+i);
 
-		free(function->STATEMENT_LIST);
-		function->STATEMENT_LIST = temp;
+		free(comp_statement->compound.statements);
+		comp_statement->compound.statements = temp;
 	}
 
-	*(function->STATEMENT_LIST + function->index++) = statement;
+	*(comp_statement->compound.statements + comp_statement->compound.size++) = statement;
 }
 
 void generate_function_code(Function *function, FILE *file){
@@ -50,14 +51,15 @@ void generate_function_code(Function *function, FILE *file){
         fprintf(file, "\tsubq $%d, %%rsp\n", stackSize);
 
     int hasCompound = 0;
-    for(int i = 0; i < function->index; i++){
-        if(function->STATEMENT_LIST[i]->type == IF || function->STATEMENT_LIST[i]->type == FOR)
+    Statement* comp = function->comp_statement;
+    for(int i = 0; i < comp->compound.size; i++){
+        if(isCompound(comp->compound.statements[i]->type))
             hasCompound = 1;
-        else if(function->STATEMENT_LIST[i]->type == RETURN){
-            generate_statement_asm(function->STATEMENT_LIST[i], 0, file);
+        else if(comp->compound.statements[i]->type == RETURN){
+            generate_statement_asm(comp->compound.statements[i], 0, file);
             break;
         }
-        generate_statement_asm(function->STATEMENT_LIST[i], x, file);
+        generate_statement_asm(comp->compound.statements[i], x, file);
 
     }
     if(hasCompound)
@@ -74,10 +76,8 @@ void destroy_function(Function** function_ptr){
 
 	Function* function = *function_ptr;
 	//freeing the statement list
-	for(int i = 0; i < function->index; i++)
-		destroy_statement(function->STATEMENT_LIST+i);
 
-	free(function->STATEMENT_LIST);
+	destroy_statement(&function->comp_statement);
 	free(function);
 
 	*function_ptr = NULL;

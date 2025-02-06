@@ -75,8 +75,8 @@ void print_ast(Parser *parser) {
     printf("FN %s -> %s:\n", functions[i]->name, functions[i]->return_type);
     // looping thru the functions
     // now loop thru the statements of the functions
-    Statement **statements = functions[i]->STATEMENT_LIST;
-    for (int j = 0; j < functions[i]->index; j++) {
+    Statement **statements = functions[i]->comp_statement->compound.statements;
+    for (int j = 0; j < functions[i]->comp_statement->compound.size; j++) {
       printf("\t");
       if (statements[j]->type == RETURN){
           printf("RETURN < ");
@@ -84,20 +84,19 @@ void print_ast(Parser *parser) {
           printf(" >");
       }
       else if(statements[j]->type == DECLARATION){
-            extern SymbolTable* symbolTable;
             char* name = NULL;
+
             if(statements[j]->expression->type == NODE_ID){
                 name = statements[j]->expression->identifier.tk->value;
-                Symbol* symbol = lookup_symbol_table(symbolTable, name);
 
                 //will definitely find it
-                printf("DECLARE < %s > %s", symbol->type, name);
+                printf("DECLARE < %d > %s", statements[j]->expression->identifier.sizeInBytes, name);
             }
             else if(statements[j]->expression->type == NODE_ASGN){
                 name = statements[j]->expression->node.var->identifier.tk->value;
-                Symbol* symbol = lookup_symbol_table(symbolTable, name);
-                printf("DECLARE < %s > %s <- ", symbol->type, name);
+                printf("DECLARE < %d > %s <- ", statements[j]->expression->node.var->identifier.sizeInBytes, name);
                 print_expression(statements[j]->expression->node.asign);
+                //why tho.. abhi tak to theek tha. finef
             }
       }
       else if(statements[j]->type == ASSIGNMENT){
