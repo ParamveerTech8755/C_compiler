@@ -5,30 +5,12 @@ main:
 	movq %rsp, %rbp
 	subq $-8, %rsp
 	movl $1, -4(%rbp)
-	movl -4(%rbp), %eax
-	movl $1, %ebx
-	cmpl %ebx, %eax
-	movl $0, %eax
-	sete %al
+	movl $0, -8(%rbp)
+	movl $98, %eax
+	addl %eax, -8(%rbp)
 	jo _overflow
-	cmpl $0, %eax
-	jz false2
-	movl $10, %eax
+	movl -8(%rbp), %eax
 	jmp return1
-	jmp end2
-false2:
-	movl -4(%rbp), %eax
-	movl $2, %ebx
-	cmpl %ebx, %eax
-	movl $0, %eax
-	sete %al
-	jo _overflow
-	cmpl $0, %eax
-	jz false3
-	movl -4(%rbp), %eax
-	jmp return1
-false3:
-end2:
 	movl -4(%rbp), %eax
 	movl $2, %ebx
 	addl %ebx, %eax

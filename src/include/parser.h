@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include "components/expression.h"
+#include "components/function.h"
 #include "components/program.h"
 #include "components/statement.h"
 #include "token.h"
@@ -35,6 +36,10 @@ int parse_assignment_statement(Expression*, Statement*, Parser*);
 int parse_expression_statement(Statement*, Parser*);
 
 int parse_if_statement(Statement*, Function*, Parser*);
+
+int parse_compound_statement(Statement*, Function*, Parser*);
+
+int parse_for_statement(Statement*, Function*, Parser*);
 
 Expression* parse_logical_or_expression(Parser*);
 

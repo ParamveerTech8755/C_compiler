@@ -9,6 +9,7 @@ enum STATEMENT_TYPE {
 	ASSIGNMENT,
 	EXPRESSION,
 	IF,
+	COMPOUND,
 	FOR
 	//thats it for now
 };
@@ -20,13 +21,29 @@ typedef struct Statement_Struct {
 	    Expression* expression;
 		struct {
     		Expression* expression;
-    		struct Statement_Struct *when_true;
-    		struct Statement_Struct *when_false;
+            //the following are compound statements
+            struct Statement_Struct* comp_true;
+            struct Statement_Struct* comp_false;
 		} conditional;
+		struct {
+		    struct Statement_Struct* init;
+			Expression* cond;
+			Expression* exp;
+		    struct Statement_Struct* comp; // this is a compound statement
+		} for_loop;
+		struct {
+		    struct Statement_Struct **statements;
+			int size;
+			int capacity;
+		} compound;
 	};
 } Statement;
 
 Statement* initialize_statement();
+
+Statement* initialize_comp_statement(int);
+
+int isCompound(enum STATEMENT_TYPE);
 
 void generate_statement_asm(Statement*, unsigned int, FILE*);
 
@@ -37,6 +54,10 @@ void generate_declaration_statement_asm(Statement*, FILE*);
 void generate_assignment_statement_asm(Statement*, FILE*);
 
 void generate_if_statement_asm(Statement*, unsigned int, FILE*);
+
+void generate_compound_statement_asm(Statement*, unsigned int, FILE*);
+
+void generate_for_statement_asm(Statement*, unsigned int, FILE*);
 
 void destroy_statement(Statement**);
 

@@ -34,19 +34,19 @@ int main(int argc, char *argv[]) {
     printf("%s\n", (*(lexer->TOKEN_LIST + i))->value);
   printf("###token list ends###\n\n");
 
-  symbolTable = create_symbol_table();
 
   Parser *parser = (Parser *)malloc(sizeof(Parser));
   if (parser == NULL) {
     perror(NO_MEM);
     destroy_lexer(&lexer);
-    destroy_symbol_table(&symbolTable);
     return EXIT_FAILURE;
   }
 
   initialize_parser(parser, lexer->TOKEN_LIST, lexer->index);
 
+  symbolTable = create_symbol_table();
   int exit_code = parse_into_ast(parser);
+
 
   if(exit_code != 0)
       fprintf(stderr, "Parsing failed\n");

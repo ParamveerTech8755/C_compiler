@@ -22,8 +22,7 @@ token* create_token(string* value, int row, int col){
 
 	//the position of the token in the source file
 	newToken->row = row;
-	newToken->col = col;
-
+	newToken->col = col - value->length;
 	newToken->value = (char*)malloc((value->length + 1)*sizeof(char));
 	//for each token, memory will be alloted separately, even if their value is the same
 	stringcpy(newToken->value, value->str);

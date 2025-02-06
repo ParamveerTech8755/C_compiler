@@ -10,19 +10,18 @@ typedef struct Function_Struct{
 	char* return_type;//points to the same location as token->value
 	/*return_type could be of enum token if the language does not support structs or user-defined data types*/
 	char* name; // = token->value
-	int index;
-	int capacity;
 	int variableCnt;
 	int maxVariableSize;
 	int stack_offset;
 
 	// Parameter** PARAMETER_LIST; array of parameters/arguments along with their data types.. fine
-	Statement** STATEMENT_LIST;
+	Statement* comp_statement;
+
 } Function;
 
 Function* initialize_function(char*, char*);
 
-void push_statement(Function*, Statement*);
+void push_statement(Statement*, Statement*);
 
 void generate_function_code(Function*, FILE*);
 

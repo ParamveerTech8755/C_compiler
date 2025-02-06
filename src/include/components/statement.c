@@ -11,6 +11,19 @@ Statement* initialize_statement(){
 
 	return statement;
 }
+Statement* initialize_comp_statement(int size){
+    Statement* statement = (Statement*)malloc(sizeof(Statement));
+    statement->compound.capacity = size;
+    statement->compound.statements = (Statement**)calloc(size, sizeof(Statement*));
+    statement->compound.size = 0;
+
+    return statement;
+}
+
+int isCompound(enum STATEMENT_TYPE type){
+    return type == COMPOUND || type == IF || type == FOR;
+    //for time being
+}
 
 void generate_statement_asm(Statement* statement, unsigned int x, FILE* file){
     switch(statement->type){
@@ -26,6 +39,12 @@ void generate_statement_asm(Statement* statement, unsigned int x, FILE* file){
             break;
         case IF:
             generate_if_statement_asm(statement, x, file);
+            break;
+        case FOR:
+            generate_for_statement_asm(statement, x, file);
+            break;
+        case COMPOUND:
+            generate_compound_statement_asm(statement, x, file);
             break;
         case EXPRESSION:
             generate_expression_asm(statement->expression, file);
@@ -79,20 +98,29 @@ void generate_assignment_asm(Expression* id, Expression* exp, FILE* file){
 
 }
 
+void generate_for_statement_asm(Statement *statement, unsigned int x, FILE * file){
+    return;
+}
+void generate_compound_statement_asm(Statement *statement, unsigned int x, FILE * file){
+    // x is needed to jump to return{x} in case the compund statement has a retrun statement
+
+    for(int i = 0; i < statement->compound.size; i++)
+        generate_statement_asm(statement->compound.statements[i], x, file);
+}
+
 void generate_if_statement_asm(Statement* statement, unsigned int y, FILE* file){
     unsigned int x = getUniqueInt();
     generate_expression_asm(statement->conditional.expression, file);
     fprintf(file, "\tcmpl $0, %%eax\n\tjz false%u\n", x);
-    generate_statement_asm(statement->conditional.when_true, y, file);
-    int has_else = statement->conditional.when_false != NULL;
+    generate_compound_statement_asm(statement->conditional.comp_true, y, file);
+    int has_else = statement->conditional.comp_false != NULL;
     if(has_else)
         fprintf(file, "\tjmp end%u\n", x);
     fprintf(file, "false%u:\n", x);
     if(has_else){
-        generate_statement_asm(statement->conditional.when_false, y, file);
+        generate_compound_statement_asm(statement->conditional.comp_false, y, file);
         fprintf(file, "end%u:\n", x);
     }
-    return;
 }
 
 void generate_declaration_statement_asm(Statement* statement, FILE* file){
@@ -169,9 +197,35 @@ void generate_return_statement_asm(Statement *statement, unsigned int x, FILE *f
         fprintf(file, "\tjmp return%u\n", x);
 }
 
+void destroy_compound_statement(Statement *statement){
+    Statement** statements = statement->compound.statements;
+    for(int i = 0; i < statement->compound.size; i++)
+        destroy_statement(statements + i);
+}
+
 void destroy_statement(Statement** statement_ptr){
-	//maybe will have to use destroy_expression later
-	free((*statement_ptr)->expression);
+    Statement* statement = *statement_ptr;
+	if((*statement_ptr)->type == IF){
+	    if(statement->conditional.expression)
+	        destroy_expression(&(statement->conditional.expression));
+		if(statement->conditional.comp_true)
+		    destroy_compound_statement(statement->conditional.comp_true);
+		if(statement->conditional.comp_false)
+		    destroy_compound_statement((*statement_ptr)->conditional.comp_false);
+	}
+	else if(statement->type == FOR){
+	    if(statement->for_loop.exp)
+	        destroy_expression(&statement->for_loop.exp);
+		if(statement->for_loop.cond)
+		    destroy_expression(&statement->for_loop.cond);
+		if(statement->for_loop.init)
+		    destroy_compound_statement(statement->for_loop.init);
+	}
+	else if((*statement_ptr)->type == COMPOUND)
+	   destroy_compound_statement(*statement_ptr);
+	else
+	   destroy_expression(&((*statement_ptr)->expression));
+
 	free(*statement_ptr);
 	*statement_ptr = NULL;
 }
