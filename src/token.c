@@ -34,98 +34,132 @@ token* create_token(string* value, int row, int col){
 	}
 	///if not a number literal
 
-	if(stringcmp(value->str, "{"))
-		newToken->type = TOKEN_RBRACE;
-	else if(stringcmp(value->str, "}"))
-		newToken->type = TOKEN_LBRACE;
-	else if(stringcmp(value->str, "("))
-		newToken->type = TOKEN_RPAREN;
-	else if(stringcmp(value->str, ")"))
-		newToken->type = TOKEN_LPAREN;
-	else if(stringcmp(value->str, "int") || stringcmp(value->str, "char"))/*all the data-types*/
-		newToken->type = TOKEN_DATA_TYPE;
-	else if(stringcmp(value->str, "void"))
-		newToken->type = TOKEN_VOID;
-	else if(stringcmp(value->str, "return"))
-		newToken->type = TOKEN_RETURN;
-	else if(stringcmp(value->str, ";"))
-		newToken->type = TOKEN_SEMI;
-	else if(stringcmp(value->str, "+"))
-	   newToken->type = TOKEN_OP_ADD;
-	else if(stringcmp(value->str, "-"))
-	   newToken->type = TOKEN_OP_SUB;
-	else if(stringcmp(value->str, "*"))
-	   newToken->type = TOKEN_OP_MUL;
-	else if(stringcmp(value->str, "/"))
-	   newToken->type = TOKEN_OP_DIV;
-	else if(stringcmp(value->str, "="))
-	    newToken->type = TOKEN_OP_ASGN;
-	else if(stringcmp(value->str, "+="))
-	   newToken->type = TOKEN_OP_ADD_ASGN;
-	else if(stringcmp(value->str, "-="))
-	   newToken->type = TOKEN_OP_SUB_ASGN;
-	else if(stringcmp(value->str, "*="))
-	   newToken->type = TOKEN_OP_MUL_ASGN;
-	else if(stringcmp(value->str, "/="))
-	   newToken->type = TOKEN_OP_DIV_ASGN;
-	else if(stringcmp(value->str, "=="))
-	    newToken->type = TOKEN_OP_EQUALS;
-	else if(stringcmp(value->str, "^"))
-	   newToken->type = TOKEN_OP_BIT_XOR;
-	else if(stringcmp(value->str, "<"))
-	    newToken->type = TOKEN_OP_LSR;
-	else if(stringcmp(value->str, "<="))
-	   newToken->type = TOKEN_OP_LSR_EQL;
-	else if(stringcmp(value->str, ">"))
-	    newToken->type = TOKEN_OP_GRT;
-	else if(stringcmp(value->str, ">="))
-	    newToken->type = TOKEN_OP_GRT_EQL;
-	else if(stringcmp(value->str, "++"))
-	   newToken->type = TOKEN_OP_INCRE;
-	else if(stringcmp(value->str, "--"))
-	    newToken->type = TOKEN_OP_DECRE;
-	else if(stringcmp(value->str, "&&"))
-	   newToken->type = TOKEN_OP_AND;
-	else if(stringcmp(value->str, "||"))
-	   newToken->type = TOKEN_OP_OR;
-	else if(stringcmp(value->str, "!="))
-	    newToken->type = TOKEN_OP_NOT_EQL;
-	else if(stringcmp(value->str, "%"))
-	    newToken->type = TOKEN_OP_MOD;
-	else if(stringcmp(value->str, "!"))
-	    newToken->type = TOKEN_OP_NOT;
-	else if(stringcmp(value->str, "~"))
-	    newToken->type = TOKEN_OP_BIT_NOT;
-	else if(stringcmp(value->str, "&"))
-	    newToken->type = TOKEN_OP_AMP; //can work as bitwise_and(binary), address_of operator(unary)
-	else if(stringcmp(value->str, "|"))
-        newToken->type = TOKEN_OP_BIT_OR;
-    else if(stringcmp(value->str, "^="))
-        newToken->type = TOKEN_OP_BIT_XOR_ASGN;
-	else if(stringcmp(value->str, "%="))
-	    newToken->type = TOKEN_OP_MOD_ASGN;
-	else if(stringcmp(value->str, "|="))
-	    newToken->type = TOKEN_OP_BIT_OR_ASGN;
-	else if(stringcmp(value->str, "&="))
-	    newToken->type = TOKEN_OP_BIT_AND_ASGN;
-    else if(stringcmp(value->str, "?"))
-        newToken->type = TOKEN_QUE_MRK;
-    else if(stringcmp(value->str, ":"))
-        newToken->type = TOKEN_COLON;
-    else if(stringcmp(value->str, "\""))
-        newToken->type = TOKEN_DB_QUOTE;
-    else if(stringcmp(value->str, "'"))
-        newToken->type = TOKEN_SG_QUOTE;
-    else if(stringcmp(value->str, "if"))
-        newToken->type = TOKEN_IF;
-    else if(stringcmp(value->str, "else"))
-        newToken->type = TOKEN_ELSE;
-	else if(is_valid_identifier(value->str))
-		newToken->type = TOKEN_ID;
+	if(value->length == 1){
+        if(stringcmp(value->str, ";"))
+            newToken->type = TOKEN_SEMI;
+        else if(stringcmp(value->str, "{"))
+      		newToken->type = TOKEN_RBRACE;
+       	else if(stringcmp(value->str, "}"))
+      		newToken->type = TOKEN_LBRACE;
+       	else if(stringcmp(value->str, "("))
+      		newToken->type = TOKEN_RPAREN;
+       	else if(stringcmp(value->str, ")"))
+      		newToken->type = TOKEN_LPAREN;
+    	else if(stringcmp(value->str, "+"))
+        	newToken->type = TOKEN_OP_ADD;
+    	else if(stringcmp(value->str, "-"))
+        	newToken->type = TOKEN_OP_SUB;
+    	else if(stringcmp(value->str, "*"))
+       	    newToken->type = TOKEN_OP_MUL;
+    	else if(stringcmp(value->str, "/"))
+            newToken->type = TOKEN_OP_DIV;
+    	else if(stringcmp(value->str, "="))
+    	    newToken->type = TOKEN_OP_ASGN;
+        else if(stringcmp(value->str, "^"))
+    	   newToken->type = TOKEN_OP_BIT_XOR;
+    	else if(stringcmp(value->str, "<"))
+    	    newToken->type = TOKEN_OP_LSR;
+        else if(stringcmp(value->str, ">"))
+            newToken->type = TOKEN_OP_GRT;
+        else if(stringcmp(value->str, "%"))
+            newToken->type = TOKEN_OP_MOD;
+    	else if(stringcmp(value->str, "!"))
+    	    newToken->type = TOKEN_OP_NOT;
+    	else if(stringcmp(value->str, "~"))
+    	    newToken->type = TOKEN_OP_BIT_NOT;
+    	else if(stringcmp(value->str, "&"))
+    	    newToken->type = TOKEN_OP_AMP; //can work as bitwise_and(binary), address_of operator(unary)
+    	else if(stringcmp(value->str, "|"))
+            newToken->type = TOKEN_OP_BIT_OR;
+        else if(stringcmp(value->str, "?"))
+            newToken->type = TOKEN_QUE_MRK;
+        else if(stringcmp(value->str, ":"))
+            newToken->type = TOKEN_COLON;
+        else if(stringcmp(value->str, "\""))
+            newToken->type = TOKEN_DB_QUOTE;
+        else if(stringcmp(value->str, "'"))
+            newToken->type = TOKEN_SG_QUOTE;
+        else if(is_valid_identifier(value->str))
+            newToken->type = TOKEN_ID;
+        else{
+            free(newToken->value);
+            free(newToken);
+            free(value->str);
+            free(value);
+            newToken = NULL;
+        }
+	}
+	else if(value->length == 2){
+        if(stringcmp(value->str, "+="))
+        	newToken->type = TOKEN_OP_ADD_ASGN;
+       	else if(stringcmp(value->str, "-="))
+        	newToken->type = TOKEN_OP_SUB_ASGN;
+       	else if(stringcmp(value->str, "*="))
+        	newToken->type = TOKEN_OP_MUL_ASGN;
+       	else if(stringcmp(value->str, "/="))
+            newToken->type = TOKEN_OP_DIV_ASGN;
+       	else if(stringcmp(value->str, "=="))
+       	    newToken->type = TOKEN_OP_EQUALS;
+        else if(stringcmp(value->str, "<="))
+            newToken->type = TOKEN_OP_LSR_EQL;
+        else if(stringcmp(value->str, ">="))
+            newToken->type = TOKEN_OP_GRT_EQL;
+    	else if(stringcmp(value->str, "++"))
+    	   newToken->type = TOKEN_OP_INCRE;
+    	else if(stringcmp(value->str, "--"))
+    	    newToken->type = TOKEN_OP_DECRE;
+    	else if(stringcmp(value->str, "&&"))
+    	   newToken->type = TOKEN_OP_AND;
+    	else if(stringcmp(value->str, "||"))
+    	   newToken->type = TOKEN_OP_OR;
+    	else if(stringcmp(value->str, "!="))
+    	    newToken->type = TOKEN_OP_NOT_EQL;
+        else if(stringcmp(value->str, "^="))
+            newToken->type = TOKEN_OP_BIT_XOR_ASGN;
+    	else if(stringcmp(value->str, "%="))
+    	    newToken->type = TOKEN_OP_MOD_ASGN;
+    	else if(stringcmp(value->str, "|="))
+    	    newToken->type = TOKEN_OP_BIT_OR_ASGN;
+    	else if(stringcmp(value->str, "&="))
+    	    newToken->type = TOKEN_OP_BIT_AND_ASGN;
+        else if(stringcmp(value->str, "if"))
+            newToken->type = TOKEN_IF;
+        else if(stringcmp(value->str, "do"))
+            newToken->type = TOKEN_DO;
+        else if(is_valid_identifier(value->str))
+            newToken->type = TOKEN_ID;
+        else{
+            free(newToken->value);
+            free(newToken);
+            free(value->str);
+            free(value);
+            newToken = NULL;
+        }
+	}
 	else{
-	    free(newToken->value);
-		free(newToken);
-		newToken = NULL;
+        if(stringcmp(value->str, "int") || stringcmp(value->str, "char"))/*all the data-types*/
+            newToken->type = TOKEN_DATA_TYPE;
+        else if(stringcmp(value->str, "return"))
+            newToken->type = TOKEN_RETURN;
+        else if(stringcmp(value->str, "else"))
+            newToken->type = TOKEN_ELSE;
+        else if(stringcmp(value->str, "for"))
+            newToken->type = TOKEN_FOR;
+        else if(stringcmp(value->str, "while"))
+            newToken->type = TOKEN_WHILE;
+        else if(stringcmp(value->str, "break"))
+            newToken->type = TOKEN_BREAK;
+        else if(stringcmp(value->str, "continue"))
+            newToken->type = TOKEN_CONTINUE;
+    	else if(is_valid_identifier(value->str))
+    		newToken->type = TOKEN_ID;
+        else{
+            free(newToken->value);
+    		free(newToken);
+            free(value->str);
+            free(value);
+    		newToken = NULL;
+    	}
 	}
 
 	return newToken;

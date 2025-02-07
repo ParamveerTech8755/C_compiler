@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 Statement* initialize_statement(){
-	Statement* statement = (Statement*)malloc(sizeof(Statement));
+	Statement* statement = (Statement*)calloc(1, sizeof(Statement));
 	statement->expression = NULL;
 
 	return statement;
@@ -25,7 +25,7 @@ int isCompound(enum STATEMENT_TYPE type){
     //for time being
 }
 
-void generate_statement_asm(Statement* statement, unsigned int x, FILE* file){
+void generate_statement_asm(Statement* statement, unsigned int x, unsigned int lp, FILE* file){
     switch(statement->type){
         case RETURN:
             generate_return_statement_asm(statement, x, file);
@@ -38,13 +38,35 @@ void generate_statement_asm(Statement* statement, unsigned int x, FILE* file){
             generate_assignment_statement_asm(statement, file);
             break;
         case IF:
-            generate_if_statement_asm(statement, x, file);
+            generate_if_statement_asm(statement, x, lp, file);
             break;
         case FOR:
             generate_for_statement_asm(statement, x, file);
             break;
+        case WHILE:
+            generate_while_statement_asm(statement, x, file);
+            break;
+        case DO_WHILE:
+            generate_do_statement_asm(statement, x, file);
+            break;
+        case BREAK:
+            if(lp == 0){
+                fprintf(stderr, "break statement is valid only within the scope of a loop.");
+                fclose(file);
+                return;
+            }
+            fprintf(file, "\tjmp end%u\n", lp);
+            break;
+        case CONTINUE:
+            if(lp == 0){
+                fprintf(stderr, "continue statement is valid only within the scope of a loop.");
+                fclose(file);
+                return;
+            }
+            fprintf(file, "\tjmp loop%u\n", lp);
+            break;
         case COMPOUND:
-            generate_compound_statement_asm(statement, x, file);
+            generate_compound_statement_asm(statement, x, lp, file);
             break;
         case EXPRESSION:
             generate_expression_asm(statement->expression, file);
@@ -99,26 +121,57 @@ void generate_assignment_asm(Expression* id, Expression* exp, FILE* file){
 }
 
 void generate_for_statement_asm(Statement *statement, unsigned int x, FILE * file){
-    return;
+    unsigned int loop_identifier = getUniqueInt();
+    if(statement->for_loop.init){
+        printf("here\n");
+        generate_statement_asm(statement->for_loop.init, x, loop_identifier, file);
+    }
+    fprintf(file, "start%u:\n", loop_identifier);
+    generate_expression_asm(statement->for_loop.cond, file);
+    //result of the cond in eax
+    fprintf(file, "\tcmpl $0, %%eax\n\tjz end%u\n", loop_identifier);
+    generate_compound_statement_asm(statement->for_loop.comp, x, loop_identifier, file);
+    fprintf(file, "loop%u:\n", loop_identifier);
+    if(statement->for_loop.exp)
+        generate_expression_asm(statement->for_loop.exp, file);
+    fprintf(file, "\tjmp start%u\nend%u:\n", loop_identifier, loop_identifier);
 }
-void generate_compound_statement_asm(Statement *statement, unsigned int x, FILE * file){
+
+void generate_while_statement_asm(Statement *statement, unsigned int x, FILE *file){
+    unsigned int loop_identifier = getUniqueInt();
+    fprintf(file, "loop%u:\n", loop_identifier);
+    generate_expression_asm(statement->do_while.cond, file);
+    fprintf(file, "\tcmpl $0, %%eax\n\tjz end%u\n", loop_identifier);
+    generate_compound_statement_asm(statement->do_while.comp, x, loop_identifier, file);
+    fprintf(file, "\tjmp loop%u\nend%u:\n", loop_identifier, loop_identifier);
+}
+
+void generate_do_statement_asm(Statement *statement, unsigned int x, FILE *file){
+    unsigned int loop_identifier = getUniqueInt();
+    fprintf(file, "start%u:\n", loop_identifier);
+    generate_compound_statement_asm(statement->do_while.comp, x, loop_identifier, file);
+    fprintf(file, "loop%u:\n", loop_identifier);
+    generate_expression_asm(statement->do_while.cond, file);
+    fprintf(file, "\tcmpl $0, %%eax\n\tjnz start%u\nend%u:\n", loop_identifier, loop_identifier);
+}
+void generate_compound_statement_asm(Statement *statement, unsigned int func, unsigned int lp, FILE * file){
     // x is needed to jump to return{x} in case the compund statement has a retrun statement
 
     for(int i = 0; i < statement->compound.size; i++)
-        generate_statement_asm(statement->compound.statements[i], x, file);
+        generate_statement_asm(statement->compound.statements[i], func, lp, file);
 }
 
-void generate_if_statement_asm(Statement* statement, unsigned int y, FILE* file){
+void generate_if_statement_asm(Statement* statement, unsigned int func, unsigned int lp, FILE* file){
     unsigned int x = getUniqueInt();
     generate_expression_asm(statement->conditional.expression, file);
     fprintf(file, "\tcmpl $0, %%eax\n\tjz false%u\n", x);
-    generate_compound_statement_asm(statement->conditional.comp_true, y, file);
+    generate_compound_statement_asm(statement->conditional.comp_true, func, lp, file);
     int has_else = statement->conditional.comp_false != NULL;
     if(has_else)
         fprintf(file, "\tjmp end%u\n", x);
     fprintf(file, "false%u:\n", x);
     if(has_else){
-        generate_compound_statement_asm(statement->conditional.comp_false, y, file);
+        generate_compound_statement_asm(statement->conditional.comp_false, func, lp, file);
         fprintf(file, "end%u:\n", x);
     }
 }

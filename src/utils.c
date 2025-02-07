@@ -6,7 +6,6 @@
 #include "include/components/statement.h"
 #include "include/customstring.h"
 #include "include/errors.h"
-#include "include/symboltable.h"
 #include "include/token.h"
 
 unsigned int getUniqueInt(){
@@ -21,6 +20,14 @@ int isAsgnOperator(enum TOKEN_TYPE type){
         type == TOKEN_OP_MUL_ASGN || type == TOKEN_OP_MOD_ASGN || type == TOKEN_OP_BIT_AND_ASGN || type == TOKEN_OP_BIT_OR_ASGN ||
         type == TOKEN_OP_BIT_XOR_ASGN
     );
+}
+
+Context* initialize_context(){
+    Context* context = (Context*)malloc(sizeof(Context));
+    context->loop_iden = 0;
+    context->func_iden = 0;
+
+    return context;
 }
 
 void generate_code(Parser *parser, char *source_file, char *output_file) {

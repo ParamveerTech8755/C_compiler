@@ -10,6 +10,10 @@ enum STATEMENT_TYPE {
 	EXPRESSION,
 	IF,
 	COMPOUND,
+	WHILE,
+	DO_WHILE,
+	BREAK,
+	CONTINUE,
 	FOR
 	//thats it for now
 };
@@ -32,6 +36,10 @@ typedef struct Statement_Struct {
 		    struct Statement_Struct* comp; // this is a compound statement
 		} for_loop;
 		struct {
+		    Expression* cond;
+			struct Statement_Struct* comp;
+		} do_while;
+		struct {
 		    struct Statement_Struct **statements;
 			int size;
 			int capacity;
@@ -45,7 +53,7 @@ Statement* initialize_comp_statement(int);
 
 int isCompound(enum STATEMENT_TYPE);
 
-void generate_statement_asm(Statement*, unsigned int, FILE*);
+void generate_statement_asm(Statement*, unsigned int, unsigned int, FILE*);
 
 void generate_return_statement_asm(Statement*, unsigned int, FILE*);
 
@@ -53,11 +61,15 @@ void generate_declaration_statement_asm(Statement*, FILE*);
 
 void generate_assignment_statement_asm(Statement*, FILE*);
 
-void generate_if_statement_asm(Statement*, unsigned int, FILE*);
+void generate_if_statement_asm(Statement*, unsigned int, unsigned int, FILE*);
 
-void generate_compound_statement_asm(Statement*, unsigned int, FILE*);
+void generate_compound_statement_asm(Statement*, unsigned int, unsigned int, FILE*);
 
 void generate_for_statement_asm(Statement*, unsigned int, FILE*);
+
+void generate_while_statement_asm(Statement*, unsigned int, FILE*);
+
+void generate_do_statement_asm(Statement*, unsigned int, FILE*);
 
 void destroy_statement(Statement**);
 

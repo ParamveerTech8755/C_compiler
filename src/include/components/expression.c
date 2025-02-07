@@ -60,30 +60,34 @@ void generate_expression_asm(Expression *expression, FILE *file){
                 case TOKEN_OP_DIV_ASGN:
                     fprintf(
                         file,
-                        "\tmovl %%eax, %%ebx\n\tmovl %d(%%rbp), %%eax\n\tcdq\n\tidivl %%ebx\n\tmovl %%eax, %d(%%rbp)\n",
+                        "\tmovl %%eax, %%ebx\n\tmovl %d(%%rbp), %%eax\n\tcdq\n\tidivl %%ebx\n\tmovl %%eax, %d(%%rbp)\n\tjo _overflow\n",
                         expression->node.var->identifier.stack_offset,
                         expression->node.var->identifier.stack_offset
                     );
-                    break;
+                    return;
                 case TOKEN_OP_MOD_ASGN:
                     fprintf(file, "\tmovl %%eax, %%ebx\n\tmovl %d(%%rbp), %%eax\n\tcdq\n\tidivl %%ebx\n", expression->node.var->identifier.stack_offset);
                     //result in %edx unlike the rest cases
-                    fprintf(file, "\tmovl %%edx, %d(%%rbp)\n\tjo _overflow\n", expression->node.var->identifier.stack_offset);
+                    fprintf(file, "\tmovl %%edx, %d(%%rbp)\n\tmovl %%edx, %%eax\n\tjo _overflow\n", expression->node.var->identifier.stack_offset);
                     return;
                 case TOKEN_OP_BIT_XOR_ASGN:
-                    fprintf(file, "\txorl %d(%%rbp), %%eax\n", expression->node.var->identifier.stack_offset);
+                    fprintf(file, "\txorl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
                     break;
                 case TOKEN_OP_BIT_AND_ASGN:
-                    fprintf(file, "\tandl %d(%%rbp), %%eax\n", expression->node.var->identifier.stack_offset);
+                    fprintf(file, "\tandl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
                     break;
                 case TOKEN_OP_BIT_OR_ASGN:
-                    fprintf(file, "\torl %d(%%rbp), %%eax\n", expression->node.var->identifier.stack_offset);
+                    fprintf(file, "\torl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
                     break;
                 default:
                     return;
             }
+            fprintf(file, "\tmovl %d(%%rbp), %%eax\n", expression->node.var->identifier.stack_offset);
         }
-        fprintf(file, "\tjo _overflow\n\tmovl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
+        else{
+            fprintf(file, "\tmovl %%eax, %d(%%rbp)\n", expression->node.var->identifier.stack_offset);
+            return;
+        }
     }
     else if(expression->type == NODE_BINARY_OPERATOR){
         generate_expression_asm(expression->node.left, file);
@@ -199,6 +203,12 @@ void generate_expression_asm(Expression *expression, FILE *file){
                 break;
             case TOKEN_OP_SUB:
                 fprintf(file, "\tneg %%eax\n");
+                break;
+            case TOKEN_OP_DECRE:
+                fprintf(file, "\tdecl %d(%%rbp)\n", expression->node.child->identifier.stack_offset);
+                break;
+            case TOKEN_OP_INCRE:
+                fprintf(file, "\tincl %d(%%rbp)\n", expression->node.child->identifier.stack_offset);
                 break;
             default:
                 return;//unknown// not reachable

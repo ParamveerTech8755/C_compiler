@@ -41,6 +41,10 @@ int parse_compound_statement(Statement*, Function*, Parser*);
 
 int parse_for_statement(Statement*, Function*, Parser*);
 
+int parse_while_statement(Statement*, Function*, Parser*);
+
+int parse_do_statement(Statement*, Function*, Parser*);
+
 Expression* parse_logical_or_expression(Parser*);
 
 Expression* parse_expression(Parser*);

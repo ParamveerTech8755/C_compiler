@@ -1,9 +1,8 @@
 int main(){
-    int x = 1;
-    {
-        int x = 0;
-        x += 98;
-        return x;
+    int sum = 0;
+    int i = 0;
+    while(i < 11){
+        sum += i++;
     }
-    return x+2;
+    return sum;
 }

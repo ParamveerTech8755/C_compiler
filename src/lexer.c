@@ -51,7 +51,7 @@ int lex_source_code(Lexer *lexer) {
       if (text->length > 0) {
         token *t = create_token(text, lexer->row, lexer->col);
         if (t == NULL) {
-          printTokenError(text->str, lexer->row, lexer->col - text->length);
+          printInvalidIdentifier(text, lexer->row, lexer->col);
           return EXIT_FAILURE;
         }
         /// push the token in the tokens array
@@ -69,7 +69,7 @@ int lex_source_code(Lexer *lexer) {
       if (text->length > 0) {
         token *t = create_token(text, lexer->row, lexer->col);
         if (t == NULL) {
-          printTokenError(text->str, lexer->row, lexer->col - text->length);
+          printInvalidIdentifier(text, lexer->row, lexer->col);
           return EXIT_FAILURE;
         }
         push_token(lexer, t);
@@ -80,7 +80,7 @@ int lex_source_code(Lexer *lexer) {
       text->length = 1;
       token *t = create_token(text, lexer->row, lexer->col);
       if (t == NULL) {
-        printTokenError(text->str, lexer->row, lexer->col - text->length);
+          printInvalidIdentifier(text, lexer->row, lexer->col);
         return EXIT_FAILURE;
       }
       push_token(lexer, t);
@@ -101,7 +101,7 @@ int lex_source_code(Lexer *lexer) {
                 lexer->text = stringconcat(text, auxString);
                 token* tk = create_token(lexer->text, lexer->row, lexer->col);
                 if(tk == NULL){
-                    printTokenError(lexer->text->str, lexer->row, lexer->col - text->length);
+                    printInvalidIdentifier(lexer->text, lexer->row, lexer->col);
                     return EXIT_FAILURE;
                 }
                 push_token(lexer, tk);
@@ -113,7 +113,7 @@ int lex_source_code(Lexer *lexer) {
             else{
                 token* tk = create_token(text, lexer->row, lexer->col);
                 if(tk == NULL){
-                    printTokenError(text->str, lexer->row, lexer->col - text->length);
+                    printInvalidIdentifier(text, lexer->row, lexer->col);
                     return EXIT_FAILURE;
                 }
                 push_token(lexer, tk);
@@ -177,7 +177,7 @@ int lex_source_code(Lexer *lexer) {
         if(text->length == 1 && isOperator(lastChar)){
             token* tk = create_token(text, lexer->row, lexer->col);
             if(tk == NULL){
-                printTokenError(text->str, lexer->row, lexer->col - text->length);
+                printInvalidIdentifier(text, lexer->row, lexer->col);
                 return EXIT_FAILURE;
             }
             push_token(lexer, tk);
@@ -198,7 +198,7 @@ int lex_source_code(Lexer *lexer) {
   if (text->length > 0) {
     token *t = create_token(text, lexer->row, lexer->col);
     if (t == NULL) {
-      printTokenError(text->str, lexer->row, lexer->col - text->length);
+        printInvalidIdentifier(text, lexer->row, lexer->col);
       return EXIT_FAILURE;
     }
     push_token(lexer, t);

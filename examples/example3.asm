@@ -4,18 +4,25 @@ main:
 	pushq %rbp
 	movq %rsp, %rbp
 	subq $-8, %rsp
-	movl $1, -4(%rbp)
+	movl $0, -4(%rbp)
 	movl $0, -8(%rbp)
-	movl $98, %eax
-	addl %eax, -8(%rbp)
-	jo _overflow
+loop2:
 	movl -8(%rbp), %eax
-	jmp return1
-	movl -4(%rbp), %eax
-	movl $2, %ebx
-	addl %ebx, %eax
+	movl $11, %ebx
+	cmpl %ebx, %eax
+	movl $0, %eax
+	setl %al
 	jo _overflow
-return1:
+	cmpl $0, %eax
+	jz end2
+	movl -8(%rbp), %eax
+	incl -8(%rbp)
+	jo _overflow
+	addl %eax, -4(%rbp)
+	jo _overflow
+	jmp loop2
+end2:
+	movl -4(%rbp), %eax
 	movq %rbp, %rsp
 	popq %rbp
 	ret

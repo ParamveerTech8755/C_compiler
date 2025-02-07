@@ -56,10 +56,10 @@ void generate_function_code(Function *function, FILE *file){
         if(isCompound(comp->compound.statements[i]->type))
             hasCompound = 1;
         else if(comp->compound.statements[i]->type == RETURN){
-            generate_statement_asm(comp->compound.statements[i], 0, file);
+            generate_statement_asm(comp->compound.statements[i], 0, 0, file);
             break;
         }
-        generate_statement_asm(comp->compound.statements[i], x, file);
+        generate_statement_asm(comp->compound.statements[i], x, 0, file);
 
     }
     if(hasCompound)
